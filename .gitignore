@@ -1,0 +1,6 @@
+.env
+*.key
+*.pem
+credentials.json
+secrets.yml
+*.tfstate
