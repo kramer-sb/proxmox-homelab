@@ -44,7 +44,7 @@ Chose **Install Proxmox VE (Graphical)**. Walked through:
 5. **Network configuration** — this ended up mattering a lot more than expected (see Step 6). At install time the mini PC had no ethernet cable connected (it had only ever used Wi-Fi under Windows), so the installer had no real DHCP lease to pull from. It pre-filled a plausible-looking but ultimately fictitious static config: `192.168.100.2/24`, gateway `192.168.100.1`. I didn't realize this was a guess rather than a real value until later.
 6. **Summary** → Install.
 
-**Gotcha:** Forgot to remove the USB drive before the post-install reboot, which just booted back into the installer menu. No harm done — the install itself was untouched. Powered off, physically removed the USB, powered back on, and it booted into the fresh Proxmox install correctly.
+**Gotcha:** Forgot to remove the USB drive before the post-install reboot, which just booted back into the installer menu. No harm done — the install itself was untouched. Powered off, physically removed the USB, powered back on, and it booted into the fresh Proxmox install correctly. This is something I'll remember for the next usb boot!
 
 ## Step 4: First login — console vs. web interface
 
