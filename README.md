@@ -9,6 +9,7 @@ proxmox-homelab/
   README.md
   .gitignore
   .gitattributes
+  .pre-commit-config.yaml
   docs/
     01-proxmox-install.md
     02-starting-stopping-proxmox.md
