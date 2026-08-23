@@ -2,6 +2,8 @@
 
 A documented build log of my home lab, running on Proxmox VE. This repo exists for two reasons: to thoroughly document the setup as I go (so I don't have to relearn things by trial and error), and to serve as a portfolio piece / learning resource for other homelabbers following a similar path.
 
+*Note: I am creating my home lab by following Joram Stith's [Home Lab: Beginner Buildout](https://www.justhacking.com/course/home-lab-beginner-buildout/) on Just Hacking Training's site. I strongly encourage you to take the course! You can pay what you can afford, which is a blessing for so many.*
+
 ## Repo structure
 
 ```
