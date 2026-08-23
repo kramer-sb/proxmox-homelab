@@ -15,9 +15,15 @@ proxmox-homelab/
   installation-notes/
     01-installing-proxmox.md
     02-security-hardening.md
+    03-installing-gitea.md
+    04-installing-vaultwarden-and-caddy.md
+    05-installing-uptime-kuma.md
   functional-docs/
     proxmox.md
     repo-workflow.md
+    gitea.md
+    vaultwarden.md
+    uptime-kuma.md
   configs/
 ```
 
@@ -81,15 +87,34 @@ This repo follows the three-part "Home Lab Notebook" documentation method taught
 
 `functional-docs/repo-workflow.md` covers this repo's own Git/GitHub setup and day-to-day commit workflow — not a home lab service, but documented the same way since it's a repeatable process worth having steps for.
 
-### Services
+### App Table
 
-| Service | IP / DNS | Access | Machine Type | Installation Notes | Functional Doc |
-|---|---|---|---|---|---|
-| Proxmox VE (host) | `10.0.0.52` (DHCP reservation on router) | Web UI `https://10.0.0.52:8006` (MFA), SSH (key-only) | Bare metal — GMKtec NucBox G10 Pro | [01-installing-proxmox.md](installation-notes/01-installing-proxmox.md), [02-security-hardening.md](installation-notes/02-security-hardening.md) | [proxmox.md](functional-docs/proxmox.md) |
-| Ubuntu 24.04 (CT 100) | `10.0.0.218` (DHCP) | SSH / Proxmox console | LXC on Proxmox | — | — |
+Every app/service in the lab gets a row. Add one as soon as something new comes online — don't wait.
 
-New services get a row here as they come online, alongside their own files in `installation-notes/` and `functional-docs/`.
+| App Name | IP Address | Service Ports | Access Type | Installation Method | Machine Type | Installation Notes | Functional Doc |
+|---|---|---|---|---|---|---|---|
+| Proxmox VE (host) | `10.0.0.52` (DHCP reservation on router) | 8006 (web UI), 22 (SSH) | Web UI (MFA) for management, SSH (key-only) for shell | ISO install (manual) | Bare metal — GMKtec NucBox G10 Pro | [01-installing-proxmox.md](installation-notes/01-installing-proxmox.md), [02-security-hardening.md](installation-notes/02-security-hardening.md) | [proxmox.md](functional-docs/proxmox.md) |
+| Ubuntu 24.04 (CT 100) | `10.0.0.218` (DHCP) | 22 (SSH) | SSH / Proxmox console | Community script (Proxmox Helper Scripts) | LXC on Proxmox | — | — |
+| Gitea | `10.0.0.15` | 3000 (HTTP web UI), 22 (SSH push/pull) | HTTP for web UI, SSH (key-based) for git push/pull | Community script (Proxmox Helper Scripts, LXC, Advanced Install) | LXC on Proxmox | [03-installing-gitea.md](installation-notes/03-installing-gitea.md) | [gitea.md](functional-docs/gitea.md) |
+| Uptime Kuma | `10.0.0.199` | 3001 (HTTP web UI) | HTTP for web UI | Community script (Proxmox Helper Scripts, LXC, Advanced Install) | LXC on Proxmox | [05-installing-uptime-kuma.md](installation-notes/05-installing-uptime-kuma.md) | [uptime-kuma.md](functional-docs/uptime-kuma.md) |
+| Vaultwarden | `10.0.0.93` | 80, 443 (HTTPS via Caddy reverse proxy) | HTTPS via browser at `https://passwords.local`, or Bitwarden app/extension | Docker LXC (community script) + Docker Compose (Vaultwarden + Caddy) | LXC on Proxmox (Docker) | [04-installing-vaultwarden-and-caddy.md](installation-notes/04-installing-vaultwarden-and-caddy.md) | [vaultwarden.md](functional-docs/vaultwarden.md) |
+
+*Kali Linux VM: built manually in Section 2.3 as a one-off exercise to compare VM vs. LXC creation — not kept running, so it doesn't have a row here.*
+
+### New App To-Do List
+
+Steps to repeat every time a new app gets added to the lab. This list grows as later chapters bring in networking, remote access, and backups.
+
+- [ ] Create a dedicated non-root user/account for the app (root only where the app leaves no other choice).
+- [ ] Install the app (community script, Docker, or manual) — capture the raw process, including any errors, in `installation-notes/`.
+- [ ] Confirm the app is reachable at its assigned IP and service port(s).
+- [ ] Set a DHCP reservation for the app's IP if it's a separate VM/LXC.
+- [ ] Distill the working steps into `functional-docs/<app>.md`.
+- [ ] Add a row for the app in the **App Table** above.
+- [ ] Add a monitor for the app in [Uptime Kuma](functional-docs/uptime-kuma.md) (ping at minimum; HTTP(S) if it serves a web UI).
+- [ ] Push the installation notes + functional doc to [Gitea](functional-docs/gitea.md) — GitHub, via the [repo workflow](functional-docs/repo-workflow.md), currently serves as the primary remote for this repo.
+- [ ] Store any credentials in [Vaultwarden](functional-docs/vaultwarden.md) — never in this repo.
 
 ## Status
 
-Actively growing as the lab expands — new docs and configs get added as new services come online.
+Chapter 2 of the course (Proxmox VE + the "Big 3" starter apps — Gitea, Vaultwarden, Uptime Kuma) is fully documented as of this update. Actively growing as the lab expands — new docs and configs get added as new services come online.
