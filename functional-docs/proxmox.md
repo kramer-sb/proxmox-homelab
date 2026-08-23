@@ -87,6 +87,6 @@ Select the VM/LXC in the sidebar, then use the top-right buttons:
 
 ## Running services on this host
 
-| Guest | Type | ID | IP |
-|---|---|---|---|
-| Ubuntu 24.04 | LXC (unprivileged) | 100 | `10.0.0.218` (DHCP) |
+See the [master App Table](../README.md#app-table) for the current list (Gitea, Vaultwarden, Uptime Kuma).
+
+The original Ubuntu 24.04 LXC (CT 100, `10.0.0.218`) built in [`installation-notes/01-installing-proxmox.md`](../installation-notes/01-installing-proxmox.md) has since been deleted, along with the practice Ubuntu/Debian hosts from Chapter 2 — per the course's end-of-chapter cleanup.

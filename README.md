@@ -94,12 +94,11 @@ Every app/service in the lab gets a row. Add one as soon as something new comes 
 | App Name | IP Address | Service Ports | Access Type | Installation Method | Machine Type | Installation Notes | Functional Doc |
 |---|---|---|---|---|---|---|---|
 | Proxmox VE (host) | `10.0.0.52` (DHCP reservation on router) | 8006 (web UI), 22 (SSH) | Web UI (MFA) for management, SSH (key-only) for shell | ISO install (manual) | Bare metal — GMKtec NucBox G10 Pro | [01-installing-proxmox.md](installation-notes/01-installing-proxmox.md), [02-security-hardening.md](installation-notes/02-security-hardening.md) | [proxmox.md](functional-docs/proxmox.md) |
-| Ubuntu 24.04 (CT 100) | `10.0.0.218` (DHCP) | 22 (SSH) | SSH / Proxmox console | Community script (Proxmox Helper Scripts) | LXC on Proxmox | — | — |
 | Gitea | `10.0.0.15` | 3000 (HTTP web UI), 22 (SSH push/pull) | HTTP for web UI, SSH (key-based) for git push/pull | Community script (Proxmox Helper Scripts, LXC, Advanced Install) | LXC on Proxmox | [03-installing-gitea.md](installation-notes/03-installing-gitea.md) | [gitea.md](functional-docs/gitea.md) |
 | Uptime Kuma | `10.0.0.199` | 3001 (HTTP web UI) | HTTP for web UI | Community script (Proxmox Helper Scripts, LXC, Advanced Install) | LXC on Proxmox | [05-installing-uptime-kuma.md](installation-notes/05-installing-uptime-kuma.md) | [uptime-kuma.md](functional-docs/uptime-kuma.md) |
 | Vaultwarden | `10.0.0.93` | 80, 443 (HTTPS via Caddy reverse proxy) | HTTPS via browser at `https://passwords.local`, or Bitwarden app/extension | Docker LXC (community script) + Docker Compose (Vaultwarden + Caddy) | LXC on Proxmox (Docker) | [04-installing-vaultwarden-and-caddy.md](installation-notes/04-installing-vaultwarden-and-caddy.md) | [vaultwarden.md](functional-docs/vaultwarden.md) |
 
-*Kali Linux VM: built manually in Section 2.3 as a one-off exercise to compare VM vs. LXC creation — not kept running, so it doesn't have a row here.*
+*Removed per the course's Chapter 2 cleanup: the Ubuntu 24.04 LXC (CT 100) built in Chapter 1, and the practice Ubuntu/Debian VMs/LXCs from Section 2.3/2.4 — no longer running, so they don't have rows here. The Kali Linux VM from Section 2.3 was likewise a one-off exercise and was never kept running.*
 
 ### New App To-Do List
 

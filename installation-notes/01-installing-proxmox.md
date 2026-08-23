@@ -99,6 +99,8 @@ Confirmed after reboot: subscription popup no longer appears.
 
 ## Step 7: First LXC — Ubuntu 24.04
 
+> **Update:** this LXC was later deleted as part of the Chapter 2 cleanup (course instructs removing the practice Ubuntu/Debian hosts once the "Big 3" apps are up) — kept here as a historical record of the first LXC built on this host.
+
 Created via the community Helper Scripts, from the host's Shell:
 
 ```bash
