@@ -1,6 +1,6 @@
-# 04 - Security Hardening (Proxmox VE)
+# Installation Notes — Security Hardening (Proxmox VE)
 
-Covers hardening the base Proxmox install: creating a non-root admin account for the web UI, adding MFA, disabling root's web login, and restricting SSH to key-based auth only.
+> Covers creating a non-root admin account for the web UI, adding MFA, disabling root's web login, and restricting SSH to key-based auth only.
 
 ## 1. New Admin User (Web UI)
 
@@ -22,7 +22,7 @@ Covers hardening the base Proxmox install: creating a non-root admin account for
 3. Scanned QR code with Aegis Authenticator
 4. Confirmed with a verify code + `admin@pve` password
 
-> Switched away from Google Authenticator after a device issue wiped all stored TOTP data with no way to recover it. Aegis supports manual encrypted export to a file I control, so a future device loss doesn't mean losing every TOTP token again.
+**Note:** switched away from Google Authenticator after a device issue wiped all stored TOTP data with no way to recover it. Aegis supports manual encrypted export to a file under my control, so a future device loss doesn't mean losing every TOTP token again.
 
 ## 3. Disable Root Web Login
 
@@ -60,11 +60,14 @@ Covers hardening the base Proxmox install: creating a non-root admin account for
    systemctl restart sshd
    ```
 7. Re-tested key login after the restart — success, no password prompt, key + passphrase only.
-8. Backed up the private key (`ssh_key`, no extension) to password manager + USB drive.
-   **Private key is never committed to this repo** — only the fact that key-only auth is configured is documented here.
+8. Backed up the private key (`ssh_key`, no extension) to password manager + USB drive. **Private key is never committed to this repo** — only the fact that key-only auth is configured is documented here.
 
 ## Result
 
 - **Web UI:** `admin@pve` + MFA only. Root web login disabled.
 - **SSH:** root, key-only, password auth disabled.
 - **Fallback:** physical console access to the host remains as the last resort if both of the above are ever lost.
+
+## No errors encountered
+
+This pass went cleanly end-to-end — no gotchas to record beyond what's captured above.
