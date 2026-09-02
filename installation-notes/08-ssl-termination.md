@@ -1,6 +1,6 @@
 # 08 - SSL Termination (Complete)
 
-Status: **Complete** — Course Section 3.5 (SSL Termination). All lab services
+Status: **Complete** - Course Section 3.5 (SSL Termination). All lab services
 now reachable over `https://` (no port number) using Caddy as a reverse
 proxy, instead of plain `http://` with a manually-remembered port.
 
@@ -13,19 +13,19 @@ Put Caddy in front of each service to:
    `http://gitea.lab:3000`
 
 Two install patterns used depending on how the underlying app runs:
-- **Docker apps** (Vaultwarden) — Caddy runs as a container in the same
+- **Docker apps** (Vaultwarden) - Caddy runs as a container in the same
   Docker Compose file, talking to the app container by container name.
-- **Native/systemd apps** (Gitea, Uptime Kuma) — Caddy installed directly on
+- **Native/systemd apps** (Gitea, Uptime Kuma) - Caddy installed directly on
   the LXC's OS, listening on the LAN IP (ports 80/443), forwarding to the
   app on `127.0.0.1` (loopback only, not exposed to the network directly).
 
-## Vaultwarden — Completed (Docker method)
+## Vaultwarden: Completed (Docker method)
 
 Already running Caddy in `docker-compose.yml` from the original Vaultwarden
 setup (see `06-static-ip-networking.md`). Updated for the new DNS name:
 
-1. Edited `Caddyfile` — changed the site block to `vaultwarden.lab`
-2. Edited `docker-compose.yml` — changed the `vaultwarden` container's
+1. Edited `Caddyfile` - changed the site block to `vaultwarden.lab`
+2. Edited `docker-compose.yml` - changed the `vaultwarden` container's
    `DOMAIN` environment variable to `https://vaultwarden.lab`
 3. Applied with:
    ```
@@ -134,10 +134,10 @@ entirely — not done as part of this course.)
 ## What's Next
 
 - **Chapter 3 wrap-up items** (per course "Home Lab Notebook"):
-  - CoreDNS added to master services list — done via `07-home-lab-dns.md`
-  - App IPs/DNS names kept current in notes — reflected across
+  - CoreDNS added to master services list - done via `07-home-lab-dns.md`
+  - App IPs/DNS names kept current in notes - reflected across
     `06-static-ip-networking.md`, `07-home-lab-dns.md`, this file
-  - Functional doc for CoreDNS install — `functional-docs/proxmox-lxc-dns-config.md`
+  - Functional doc for CoreDNS install - `functional-docs/proxmox-lxc-dns-config.md`
   - New-service checklist updated to include: static IP → CoreDNS entry →
     Caddy (if applicable) → Uptime Kuma monitor → documentation
 - **Chapter 4**: remote access to the home lab via Tailscale
