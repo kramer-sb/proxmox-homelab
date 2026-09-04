@@ -21,6 +21,9 @@ proxmox-homelab/
     06-static-ip-networking.md
     07-home-lab-dns.md
     08-ssl-termination.md
+    09-tailscale-remote-access.md
+    09a-tailscale-icmp-troubleshooting-addendum.md
+    09b-mobile-remote-access-testing.md
   functional-docs/
     proxmox.md
     repo-workflow.md
@@ -28,6 +31,8 @@ proxmox-homelab/
     vaultwarden.md
     uptime-kuma.md
     coredns.md
+    tailscale.md
+    trusting-caddy-local-ca-windows.md
   configs/
 ```
 
@@ -71,7 +76,7 @@ repos:
 **How it behaves:**
 
 - Runs on every `git commit`, regardless of whether the commit is made through VSCode's Source Control panel or GitHub Desktop - both call plain `git` underneath, so the hook fires either way.
-- The very first commit after `pre-commit install` is slower (~30s–1min), since it downloads and builds the gitleaks hook environment. After that it's fast and reused.
+- The very first commit after `pre-commit install` is slower (~30s-1min), since it downloads and builds the gitleaks hook environment. After that it's fast and reused.
 - Scans staged changes for hardcoded secrets before the commit is allowed to complete. A commit is blocked if something secret-shaped is found.
 
 **Note:** gitleaks installed via `apt` on Ubuntu reports `version is set by build process` instead of an actual version number when running `gitleaks version` - this is a known quirk of the distro-packaged build, not a broken install. `apt policy gitleaks` shows the real installed version if needed.
@@ -99,16 +104,17 @@ As of Chapter 3, all machines run on **static IPs** (increments of 5, starting a
 
 | App Name | IP Address | Service Ports | Access Type | Installation Method | Machine Type | Installation Notes | Functional Doc |
 |---|---|---|---|---|---|---|---|
-| Proxmox VE (host) | `10.0.0.5` (static) | 8006 (web UI), 22 (SSH) | Web UI (MFA) for management, SSH (key-only) for shell | ISO install (manual) | Bare metal — GMKtec NucBox G10 Pro | [01-installing-proxmox.md](installation-notes/01-installing-proxmox.md), [02-security-hardening.md](installation-notes/02-security-hardening.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md) | [proxmox.md](functional-docs/proxmox.md) |
+| Proxmox VE (host) | `10.0.0.5` (static) | 8006 (web UI), 22 (SSH) | Web UI (MFA) for management, SSH (key-only) for shell | ISO install (manual) | Bare metal - GMKtec NucBox G10 Pro | [01-installing-proxmox.md](installation-notes/01-installing-proxmox.md), [02-security-hardening.md](installation-notes/02-security-hardening.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md) | [proxmox.md](functional-docs/proxmox.md) |
 | Gitea | `10.0.0.10` (static) | 3000 (HTTP, loopback only), 80/443 via Caddy, 22 (SSH push/pull) | `https://gitea.lab` for web UI (Caddy reverse proxy, self-signed cert), SSH (key-based) for git push/pull | Community script (Proxmox Helper Scripts, LXC, Advanced Install) | LXC on Proxmox | [03-installing-gitea.md](installation-notes/03-installing-gitea.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md), [08-ssl-termination.md](installation-notes/08-ssl-termination.md) | [gitea.md](functional-docs/gitea.md) |
 | Uptime Kuma | `10.0.0.20` (static) | 3001 (HTTP, loopback only), 80/443 via Caddy | `https://kuma.lab` for web UI (Caddy reverse proxy, self-signed cert) | Community script (Proxmox Helper Scripts, LXC, Advanced Install) | LXC on Proxmox | [05-installing-uptime-kuma.md](installation-notes/05-installing-uptime-kuma.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md), [08-ssl-termination.md](installation-notes/08-ssl-termination.md) | [uptime-kuma.md](functional-docs/uptime-kuma.md) |
 | Vaultwarden | `10.0.0.15` (static) | 80, 443 (HTTPS via Caddy reverse proxy) | `https://vaultwarden.lab` via browser (Caddy reverse proxy, self-signed cert), or Bitwarden app/extension | Docker LXC (community script) + Docker Compose (Vaultwarden + Caddy) | LXC on Proxmox (Docker) | [04-installing-vaultwarden-and-caddy.md](installation-notes/04-installing-vaultwarden-and-caddy.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md), [08-ssl-termination.md](installation-notes/08-ssl-termination.md) | [vaultwarden.md](functional-docs/vaultwarden.md) |
-| CoreDNS | `10.0.0.30` (static) | 53 (DNS) | Internal DNS only — no web UI. Resolves `.lab` hostnames for the lab, forwards everything else upstream | Manual install | LXC on Proxmox | [07-home-lab-dns.md](installation-notes/07-home-lab-dns.md) | [coredns.md](functional-docs/coredns.md) |
+| CoreDNS | `10.0.0.30` (static) | 53 (DNS) | Internal DNS only - no web UI. Resolves `.lab` hostnames for the lab, forwards everything else upstream | Manual install | LXC on Proxmox | [07-home-lab-dns.md](installation-notes/07-home-lab-dns.md) | [coredns.md](functional-docs/coredns.md) |
 | Kali Linux | `10.0.0.25` (static) | N/A (workstation VM, no persistent service) | Console/desktop access via Proxmox | Manual ISO install | VM on Proxmox | [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md) | - |
+| Tailscale Subnet Router (ts-router) | `10.0.0.35` (static) <!-- confirm actual IP assigned --> | N/A (relay only, no web UI) | No direct access; advertises the `10.0.0.0/24` route to the tailnet so any Tailscale-connected device (including off-network devices, e.g. a phone on cellular data) can reach every lab service by IP or `.lab` domain | Community script (Proxmox Helper Scripts, LXC) + `tailscale up` / `tailscale set --advertise-routes` | LXC on Proxmox | [09-tailscale-remote-access.md](installation-notes/09-tailscale-remote-access.md), [09a-tailscale-icmp-troubleshooting-addendum.md](installation-notes/09a-tailscale-icmp-troubleshooting-addendum.md), [09b-mobile-remote-access-testing.md](installation-notes/09b-mobile-remote-access-testing.md) | [tailscale.md](functional-docs/tailscale.md) |
 
 *Removed per the course's Chapter 2 cleanup: the Ubuntu 24.04 LXC (CT 100) built in Chapter 1, and the practice Ubuntu/Debian VMs/LXCs from Section 2.3/2.4 - no longer running, so they don't have rows here.*
 
-**Note on DNS:** the Xfinity gateway's admin UI does not expose a DHCP-wide DNS override field (confirmed locked down - see `07-home-lab-dns.md`), so `10.0.0.30` is set as the DNS server manually on each static-IP machine rather than pushed out automatically. Everyday DHCP devices (phone, main Windows machine's Wi-Fi adapter) need this set by hand too if they need to resolve `.lab` names - done for the primary Windows workstation, not yet done lab-wide.
+**Note on DNS:** the Xfinity gateway's admin UI does not expose a DHCP-wide DNS override field (confirmed locked down - see `07-home-lab-dns.md`), so `10.0.0.30` is set as the DNS server manually on each static-IP lab machine (Proxmox host itself, and the Windows management host, both use gateway/Xfinity DNS instead - only the lab VMs/LXCs point at CoreDNS directly). As of Chapter 4, devices connected to the tailnet (the Windows host, and any other Tailscale-connected device such as a phone) resolve `.lab` domains through a Split DNS entry pushed from the Tailscale admin console, rather than needing CoreDNS set as their local DNS server. This is what makes `.lab` names resolve correctly even when away from home - see `functional-docs/tailscale.md`.
 
 ### New App To-Do List
 
@@ -128,4 +134,8 @@ Steps to repeat every time a new app gets added to the lab. This list grows as l
 
 ## Status
 
-Chapter 3 of the course (home lab networking - static IPs, CoreDNS, and SSL termination with Caddy) is fully documented as of this update. All apps are now reachable by `.lab` domain name over HTTPS. Actively growing as the lab expands - new docs and configs get added as new services come online. Chapter 4 (remote access via Tailscale) is next.
+Chapter 3 of the course (home lab networking - static IPs, CoreDNS, and SSL termination with Caddy) is fully documented as of this update. All apps are now reachable by `.lab` domain name over HTTPS.
+
+Chapter 4 (remote access via Tailscale) is in progress. A dedicated subnet router LXC (`ts-router`) advertises the full `10.0.0.0/24` lab subnet to the tailnet, and Split DNS is configured so `.lab` domains resolve correctly from any Tailscale-connected device, including devices away from home. Verified working from a phone on cellular data with Wi-Fi disabled. Remaining Chapter 4 sections (sharing services with others, further remote-access hardening) not yet started.
+
+Actively growing as the lab expands - new docs and configs get added as new services come online.
