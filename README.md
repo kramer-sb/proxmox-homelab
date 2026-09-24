@@ -2,7 +2,7 @@
 
 A documented build log of my home lab, running on Proxmox VE. This repo exists for two reasons: to thoroughly document the setup as I go (so I don't have to relearn things by trial and error), and to serve as a portfolio piece / learning resource for other homelabbers following a similar path.
 
-<small>*Note: I am creating my home lab by following Joram Stith's [Home Lab: Beginner Buildout](https://www.justhacking.com/course/home-lab-beginner-buildout/) on Just Hacking Training's site. I strongly encourage you to take the course! You can pay what you can afford, which is a blessing for so many.*</small>
+*Note: I am creating my home lab by following Joram Stith's [Home Lab: Beginner Buildout](https://www.justhacking.com/course/home-lab-beginner-buildout/) on Just Hacking Training's site. I strongly encourage you to take the course! You can pay what you can afford, which is a blessing for so many.*
 
 ## Repo structure
 
@@ -24,6 +24,10 @@ proxmox-homelab/
     09-tailscale-remote-access.md
     09a-tailscale-icmp-troubleshooting-addendum.md
     09b-mobile-remote-access-testing.md
+    10-local-backups-and-jobs.md
+    11-proxmox-backup-server-install.md
+    12-cloud-backups-backblaze-b2.md
+    13-usb-drive-backups.md
   functional-docs/
     proxmox.md
     repo-workflow.md
@@ -33,6 +37,8 @@ proxmox-homelab/
     coredns.md
     tailscale.md
     trusting-caddy-local-ca-windows.md
+    backup-strategy.md
+    proxmox-backup-server.md
   configs/
 ```
 
@@ -51,6 +57,8 @@ This is a **public** repo, so a few ground rules are followed throughout:
 - Configs that need a credential use a placeholder (e.g. `TAILSCALE_AUTHKEY=your-key-here`) or an environment variable instead of a real value.
 - A `.gitignore` blocks common secret-shaped files (`.env`, `*.key`, `*.pem`, `credentials.json`, `secrets.yml`, `*.tfstate`) from ever being staged.
 
+This now also covers backups: encryption keys for cloud backups are never committed, same as any other credential. See `functional-docs/backup-strategy.md`.
+
 ## Secret scanning (gitleaks pre-commit hook)
 
 To make the "never commit secrets" rule enforced rather than just aspirational, `gitleaks` runs automatically before every commit via a `pre-commit` hook.
@@ -65,7 +73,7 @@ To make the "never commit secrets" rule enforced rather than just aspirational, 
 
 **Config:** a `.pre-commit-config.yaml` in the repo root defines the hook:
 
-```yaml
+```
 repos:
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1
@@ -110,11 +118,14 @@ As of Chapter 3, all machines run on **static IPs** (increments of 5, starting a
 | Vaultwarden | `10.0.0.15` (static) | 80, 443 (HTTPS via Caddy reverse proxy) | `https://vaultwarden.lab` via browser (Caddy reverse proxy, self-signed cert), or Bitwarden app/extension | Docker LXC (community script) + Docker Compose (Vaultwarden + Caddy) | LXC on Proxmox (Docker) | [04-installing-vaultwarden-and-caddy.md](installation-notes/04-installing-vaultwarden-and-caddy.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md), [08-ssl-termination.md](installation-notes/08-ssl-termination.md) | [vaultwarden.md](functional-docs/vaultwarden.md) |
 | CoreDNS | `10.0.0.30` (static) | 53 (DNS) | Internal DNS only - no web UI. Resolves `.lab` hostnames for the lab, forwards everything else upstream | Manual install | LXC on Proxmox | [07-home-lab-dns.md](installation-notes/07-home-lab-dns.md) | [coredns.md](functional-docs/coredns.md) |
 | Kali Linux | `10.0.0.25` (static) | N/A (workstation VM, no persistent service) | Console/desktop access via Proxmox | Manual ISO install | VM on Proxmox | [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md) | - |
-| Tailscale Subnet Router (ts-router) | `10.0.0.35` (static) <!-- confirm actual IP assigned --> | N/A (relay only, no web UI) | No direct access; advertises the `10.0.0.0/24` route to the tailnet so any Tailscale-connected device (including off-network devices, e.g. a phone on cellular data) can reach every lab service by IP or `.lab` domain | Community script (Proxmox Helper Scripts, LXC) + `tailscale up` / `tailscale set --advertise-routes` | LXC on Proxmox | [09-tailscale-remote-access.md](installation-notes/09-tailscale-remote-access.md), [09a-tailscale-icmp-troubleshooting-addendum.md](installation-notes/09a-tailscale-icmp-troubleshooting-addendum.md), [09b-mobile-remote-access-testing.md](installation-notes/09b-mobile-remote-access-testing.md) | [tailscale.md](functional-docs/tailscale.md) |
+| Tailscale Subnet Router (ts-router) | `10.0.0.35` (static) | N/A (relay only, no web UI) | No direct access; advertises the `10.0.0.0/24` route to the tailnet so any Tailscale-connected device (including off-network devices, e.g. a phone on cellular data) can reach every lab service by IP or `.lab` domain | Community script (Proxmox Helper Scripts, LXC) + `tailscale up` / `tailscale set --advertise-routes` | LXC on Proxmox | [09-tailscale-remote-access.md](installation-notes/09-tailscale-remote-access.md), [09a-tailscale-icmp-troubleshooting-addendum.md](installation-notes/09a-tailscale-icmp-troubleshooting-addendum.md), [09b-mobile-remote-access-testing.md](installation-notes/09b-mobile-remote-access-testing.md) | [tailscale.md](functional-docs/tailscale.md) |
+| Proxmox Backup Server (PBS) | `10.0.0.40` (static) | 8007 (web UI) | Web UI (root@pam) for managing datastores and S3 endpoints; PVE talks to it directly for backup/restore, no manual access needed day-to-day | Community script (Proxmox Helper Scripts, LXC) + post-install script | LXC on Proxmox | [11-proxmox-backup-server-install.md](installation-notes/11-proxmox-backup-server-install.md), [12-cloud-backups-backblaze-b2.md](installation-notes/12-cloud-backups-backblaze-b2.md), [13-usb-drive-backups.md](installation-notes/13-usb-drive-backups.md) | [proxmox-backup-server.md](functional-docs/proxmox-backup-server.md) |
 
 *Removed per the course's Chapter 2 cleanup: the Ubuntu 24.04 LXC (CT 100) built in Chapter 1, and the practice Ubuntu/Debian VMs/LXCs from Section 2.3/2.4 - no longer running, so they don't have rows here.*
 
 **Note on DNS:** the Xfinity gateway's admin UI does not expose a DHCP-wide DNS override field (confirmed locked down - see `07-home-lab-dns.md`), so `10.0.0.30` is set as the DNS server manually on each static-IP lab machine (Proxmox host itself, and the Windows management host, both use gateway/Xfinity DNS instead - only the lab VMs/LXCs point at CoreDNS directly). As of Chapter 4, devices connected to the tailnet (the Windows host, and any other Tailscale-connected device such as a phone) resolve `.lab` domains through a Split DNS entry pushed from the Tailscale admin console, rather than needing CoreDNS set as their local DNS server. This is what makes `.lab` names resolve correctly even when away from home - see `functional-docs/tailscale.md`.
+
+**Note on backups:** local backups for every VM/LXC live on the Proxmox host's own `local` storage. Off-site copies run through the Proxmox Backup Server: a scheduled cloud backup to Backblaze B2 (client-side encrypted before it leaves the lab), and an on-demand backup to a removable USB drive. See `functional-docs/backup-strategy.md` for the full 3/2/1 reasoning.
 
 ### New App To-Do List
 
@@ -129,6 +140,7 @@ Steps to repeat every time a new app gets added to the lab. This list grows as l
 - [ ] Distill the working steps into `functional-docs/<app>.md`.
 - [ ] Add a row for the app in the **App Table** above.
 - [ ] Add a monitor for the app in [Uptime Kuma](functional-docs/uptime-kuma.md), pointed at its `.lab` domain name (ping at minimum; HTTP(S) if it serves a web UI).
+- [ ] Add the machine to the local, cloud, and (if used) USB backup jobs in Proxmox - see [proxmox-backup-server.md](functional-docs/proxmox-backup-server.md).
 - [ ] Push the installation notes + functional doc to [Gitea](functional-docs/gitea.md) - GitHub, via the [repo workflow](functional-docs/repo-workflow.md), currently serves as the primary remote for this repo.
 - [ ] Store any credentials in [Vaultwarden](functional-docs/vaultwarden.md) - never in this repo.
 
@@ -137,5 +149,7 @@ Steps to repeat every time a new app gets added to the lab. This list grows as l
 Chapter 3 of the course (home lab networking - static IPs, CoreDNS, and SSL termination with Caddy) is fully documented as of this update. All apps are now reachable by `.lab` domain name over HTTPS.
 
 Chapter 4 (remote access via Tailscale) is in progress. A dedicated subnet router LXC (`ts-router`) advertises the full `10.0.0.0/24` lab subnet to the tailnet, and Split DNS is configured so `.lab` domains resolve correctly from any Tailscale-connected device, including devices away from home. Verified working from a phone on cellular data with Wi-Fi disabled. Remaining Chapter 4 sections (sharing services with others, further remote-access hardening) not yet started.
+
+Chapter 5 (backups) is now documented. Local, on-demand and scheduled backups are working through the built-in Proxmox backup feature. A 3/2/1 backup strategy is defined (`functional-docs/backup-strategy.md`), implemented with the Proxmox Backup Server: a scheduled, client-side-encrypted cloud backup to Backblaze B2, and an on-demand backup to a removable USB drive. Both full restores and file-level restores have been tested successfully against the Gitea LXC.
 
 Actively growing as the lab expands - new docs and configs get added as new services come online.
