@@ -146,10 +146,10 @@ Steps to repeat every time a new app gets added to the lab. This list grows as l
 
 ## Status
 
-Chapter 3 of the course (home lab networking - static IPs, CoreDNS, and SSL termination with Caddy) is fully documented as of this update. All apps are now reachable by `.lab` domain name over HTTPS.
+**JHT's Home Lab: Beginner Buildout course is complete**, chapters 1 through 5, as of this update.
 
-Chapter 4 (remote access via Tailscale) is in progress. A dedicated subnet router LXC (`ts-router`) advertises the full `10.0.0.0/24` lab subnet to the tailnet, and Split DNS is configured so `.lab` domains resolve correctly from any Tailscale-connected device, including devices away from home. Verified working from a phone on cellular data with Wi-Fi disabled. Remaining Chapter 4 sections (sharing services with others, further remote-access hardening) not yet started.
+- **Chapter 3** (home lab networking - static IPs, CoreDNS, and SSL termination with Caddy): all apps are reachable by `.lab` domain name over HTTPS.
+- **Chapter 4** (remote access via Tailscale): a dedicated subnet router LXC (`ts-router`) advertises the full `10.0.0.0/24` lab subnet to the tailnet, with Split DNS configured so `.lab` domains resolve correctly from any Tailscale-connected device, including devices away from home. Verified working from a phone on cellular data with Wi-Fi disabled.
+- **Chapter 5** (backups): local, on-demand and scheduled backups run through the built-in Proxmox backup feature (daily, keep 7). A 3/2/1 backup strategy is defined (`functional-docs/backup-strategy.md`), implemented with the Proxmox Backup Server (`10.0.0.40`): a scheduled, client-side-encrypted cloud backup to Backblaze B2 (monthly, keep 3), and an on-demand backup to a removable USB drive (keep 3). Both full restores and file-level restores have been tested successfully against the Gitea LXC.
 
-Chapter 5 (backups) is now documented. Local, on-demand and scheduled backups are working through the built-in Proxmox backup feature. A 3/2/1 backup strategy is defined (`functional-docs/backup-strategy.md`), implemented with the Proxmox Backup Server: a scheduled, client-side-encrypted cloud backup to Backblaze B2, and an on-demand backup to a removable USB drive. Both full restores and file-level restores have been tested successfully against the Gitea LXC.
-
-Actively growing as the lab expands - new docs and configs get added as new services come online.
+This repo is done as a course companion but stays active as the lab itself keeps growing - new services, configs, and hardening get documented the same way as they come online.

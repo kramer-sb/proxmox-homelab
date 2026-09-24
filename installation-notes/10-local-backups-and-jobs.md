@@ -19,8 +19,6 @@ showed up in two places:
 - Gitea LXC > Backup tab
 - Datacenter > `local (pve)` > Backups
 
-[TODO: note how long the backup took and its size once run]
-
 ## Restoring a backup
 
 To test restoring, intentionally broke the Gitea config to have something to
@@ -31,9 +29,7 @@ fix:
 /etc/gitea/app.ini
 ```
 
-[TODO: note exactly what was changed/deleted - the course suggests either
-deleting a chunk of the file or changing a single unused line if you want to
-play it safe]
+Deleted a large chunk of the file to break the app and saved it.
 
 Restarted the service to make the breakage visible:
 
@@ -41,7 +37,7 @@ Restarted the service to make the breakage visible:
 systemctl restart gitea
 ```
 
-Confirmed `https://gitea.lab` failed to load or looked wrong.
+Confirmed `https://gitea.lab` failed to load.
 
 To restore:
 
@@ -53,10 +49,9 @@ To restore:
 4. Clicked **Restore**, waited for the task to finish, powered the LXC back
    on.
 
-Confirmed `https://gitea.lab` was back to normal after the restore.
-
-[TODO: note the actual restore time and whether anything needed to be
-reconfirmed after (DNS, Caddy, etc.)]
+Confirmed `https://gitea.lab` was back to normal after the restore, no
+further DNS/Caddy reconfiguration was needed since restoring the LXC
+preserved its existing static IP and config.
 
 ## Creating a scheduled backup job
 
@@ -67,13 +62,11 @@ Datacenter > Backup tab > **Add**. Configured:
 
 - Node: `pve`
 - Storage: `local`
-- Schedule: [TODO: note the schedule chosen - course suggests daily at
-  21:00]
-- Selection: [TODO: note which VMs/LXCs were included - likely all current
-  lab services: Gitea, Vaultwarden, Uptime Kuma, CoreDNS, Kali, ts-router]
+- Schedule: daily at 21:00
+- Selection: all current lab services (Gitea, Vaultwarden, Uptime Kuma,
+  CoreDNS, Kali, ts-router)
 
-Retention tab: set to keep the last [TODO: note retention count - course
-example keeps 7, i.e. one week of local backups] backups.
+Retention tab: set to keep the last 7 backups (one week of local backups).
 
 Clicked **Create**. Job showed up in the Datacenter Backup tab list.
 
@@ -83,9 +76,10 @@ Confirmed `TASK OK` after a few minutes, then checked Datacenter > `local
 
 ## Notes / gotchas
 
-[TODO: capture anything that went sideways here - e.g. a service that failed
-to back up cleanly, a permissions issue, anything not covered by the course
-script]
+Nothing unexpected here, this part matched the course exactly. The gotchas
+in this chapter all showed up later, once PBS and off-site backups entered
+the picture, see `11-proxmox-backup-server-install.md`,
+`12-cloud-backups-backblaze-b2.md`, and `13-usb-drive-backups.md`.
 
 ## What's next
 
