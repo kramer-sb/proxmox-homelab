@@ -8,7 +8,7 @@ that never touches the internet.
 
 ## Preparing the drive
 
-Drive: [TODO: note drive size/model used - course example is 128 GB]
+Drive: Verbatim Pinstripe 128 GB
 
 Partitioned with an ext4 filesystem. Confirmed it was readable from a Linux
 system before moving on.
