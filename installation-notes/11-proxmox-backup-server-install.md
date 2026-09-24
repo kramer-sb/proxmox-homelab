@@ -22,11 +22,15 @@ during the install:
 Ran the script from the Proxmox shell and stepped through the installer,
 making sure to hit both of the above.
 
-Assigned IP: `10.0.0.40` (static) [TODO: confirm - following the
-increment-of-5 static IP convention used for everything else in the lab;
-replace with the real address if a different one was used]
+Used the **Advanced Install** option so the LXC's settings could be set
+directly instead of accepting the script's defaults.
 
-CTID: `999` [TODO: confirm actual CTID assigned]
+Assigned IP: `10.0.0.40` (static), continuing the increment-of-5 convention
+used for every other machine in the lab.
+
+CTID: `999`
+
+Hostname: `proxmox-backup-server`
 
 Once the install finished, the script printed a URL for the PBS web UI.
 
@@ -62,8 +66,39 @@ rebooting the PBS LXC; signed back in afterward with no more nag.
 
 ## Notes / gotchas
 
-[TODO: note anything that came up during install - IPv6 disable step,
-password requirements, any error messages]
+**DNS Server field during Advanced Install.** The advanced installer prompts
+for a "DNS Server IP" for the new container. This isn't asking for a new
+address to assign following the lab's `+5` static IP scheme, it's asking
+which existing DNS server the container should use to resolve hostnames,
+the same way every other lab LXC points at CoreDNS (`10.0.0.30`).
+
+Misread this the first time and entered `10.0.0.45` (continuing the
+increment-of-5 pattern used for assigning the container its *own* address),
+which isn't a real device on the network. This broke all DNS resolution
+inside the PBS container from the start, visible in the install log itself:
+
+```
+APT repository DNS resolution failed in container, injecting public DNS servers
+```
+
+That workaround was enough to finish the package install, but didn't fix DNS
+going forward. It surfaced later as a "Bad Request, failed to list buckets"
+error when trying to add the S3 datastore (see
+`12-cloud-backups-backblaze-b2.md`), which took a while to trace back to
+this. Fixed from the Proxmox host shell:
+
+```
+pct set 999 --nameserver 10.0.0.30
+pct reboot 999
+```
+
+Confirmed the fix with `cat /etc/resolv.conf` inside the container (should
+show `10.0.0.30`), then `curl -I https://<some external host>` to confirm
+resolution actually works.
+
+**Lesson for next time:** the DNS Server field in the advanced installer
+always wants `10.0.0.30` (CoreDNS), never the next number in the
+static-IP sequence.
 
 ## What's next
 
