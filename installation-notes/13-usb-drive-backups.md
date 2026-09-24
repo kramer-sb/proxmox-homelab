@@ -2,16 +2,28 @@
 
 Course: Chapter 5.6 - USB Drive Backups
 
-Second (optional) off-site backup leg: passing a USB drive through to the PBS
-LXC (`10.0.0.40`) as a local datastore, for a fully offline copy of the lab
-that never touches the internet.
+Second (optional) off-site backup leg: passing a USB drive through to the PBS LXC (`10.0.0.40`) as a local datastore, for a fully offline copy of the lab that never touches the internet.
 
 ## Preparing the drive
 
-Drive: Verbatim Pinstripe 128 GB
+Drive: labeled `ProxmoxUSB`, single partition `sda1`.
 
-Partitioned with an ext4 filesystem. Confirmed it was readable from a Linux
-system before moving on.
+**Gotcha: the drive came up as exFAT, not ext4.** This is because I formatted it on my Windows host. 
+
+ After the initial `mount /dev/sda1 /mnt/usb-backup` below, `ls /mnt/usb-backup` showed a `System Volume Information` folder, a Windows artifact, instead of the `lost+found` folder a fresh ext4 filesystem creates (which is what the course video showed). `lsblk -f` confirmed the partition's `FSTYPE` was `exfat`.
+
+exFAT doesn't support Linux file ownership/permissions, so the UID-mapping step further down (giving the PBS LXC's `backup` user permission on the mount) would not have worked on it. Reformatted before continuing:
+
+```
+umount /mnt/usb-backup      # note: umount, not "unmount"
+mkfs.ext4 /dev/sda1
+mount /dev/sda1 /mnt/usb-backup
+ls /mnt/usb-backup          # confirmed lost+found now, matching the course
+```
+
+Reformatting generates a new UUID for the partition. Re-ran `lsblk -f` to get the updated UUID before continuing (the mount/unmount scripts below need the current UUID, not the original exFAT one).
+
+**Lesson for next time:** don't assume a drive labeled/marketed for this purpose is already in the right filesystem. Check `lsblk -f` before building anything on top of the mount.
 
 ## Finding the drive on Proxmox
 
@@ -25,10 +37,8 @@ blkid -U <UUID>   # confirm the /dev path for that UUID
 
 Recorded:
 
-- Partition: [TODO: e.g. `sda1`]
-- UUID: [TODO: actual UUID - do NOT reuse the course's example UUID
-  `56ed1933-ac58-4646-98e4-62649d2c9393`, that's specific to the course
-  author's drive]
+- Partition: `sda1`
+- UUID: [fill in from `lsblk -f` after the ext4 reformat below, do NOT reuse the course's example UUID `56ed1933-ac58-4646-98e4-62649d2c9393`,   that's specific to the course author's drive, and the exFAT-to-ext4 reformat below generates a brand new one regardless]
 
 ## Mounting on the Proxmox host
 
@@ -37,8 +47,7 @@ mkdir -p /mnt/usb-backup
 mount /dev/sda1 /mnt/usb-backup
 ```
 
-Confirmed the mount worked by listing the directory (saw the default
-`lost+found` for a fresh ext4 filesystem).
+Confirmed the mount worked by listing the directory (saw the default `lost+found` for a fresh ext4 filesystem).
 
 ## Passing the mount into the PBS LXC
 
@@ -60,10 +69,7 @@ Rebooted the LXC to apply it:
 pct reboot 999
 ```
 
-Confirmed the mount showed up inside the PBS LXC's own `/mnt`, but reading
-from it failed at this point with a permissions error - expected, since
-Proxmox hadn't yet been told the PBS LXC is allowed to touch that host
-directory.
+Confirmed the mount showed up inside the PBS LXC's own `/mnt`, but reading from it failed at this point with a permissions error - expected, since Proxmox hadn't yet been told the PBS LXC is allowed to touch that host directory.
 
 ## Fixing permissions (UID mapping)
 
@@ -79,8 +85,8 @@ Checked whether the PBS LXC uses the default UID base offset (100,000):
 grep lxc.idmap /etc/pve/lxc/999.conf
 ```
 
-No output meant the default 100,000 offset applies. [TODO: confirm this was
-the case, or note the actual offset if different]
+No output, meaning the default 100,000 offset applies (this LXC never had a
+custom `lxc.idmap` set).
 
 Calculated the Proxmox-side UID: `100,000 + 34 = 100034`.
 
@@ -111,7 +117,7 @@ scripts on the PVE host to make replugging the drive repeatable.
 
 ```bash
 #!/bin/bash
-UUID="<actual USB drive UUID>"
+UUID="b7d4221c-70c8-4359-9ef3-cf53cc269f33"
 MOUNTPOINT="/mnt/usb-backup"
 CTID=999
 
@@ -156,7 +162,7 @@ The repeatable process going forward:
 
 PBS web UI > **Add Datastore**:
 
-- Name: `usb-backup` [TODO: confirm name used]
+- Name: `usb-backup`
 - Datastore type: **Local**
 - Backing Path: `/mnt/usb-backup`
 
@@ -165,40 +171,31 @@ PBS web UI > **Add Datastore**:
 Same pattern as the cloud datastore: Datacenter > Storage > Add > **Proxmox
 Backup Server**.
 
-- ID: [TODO: confirm name]
+- ID: `usb-backup`
 - Server: `10.0.0.40`
 - Username: `root@pam`
 - Password: PBS LXC's root password
 - Datastore: `usb-backup`
-- Fingerprint: same PBS certificate fingerprint used for the cloud storage
-  link (PBS Certificates tab)
+- Fingerprint: same PBS certificate fingerprint used for the cloud storage link (PBS Certificates tab)
 
 ## Taking backups to the USB drive
 
-Deliberately **not** a scheduled job. A scheduled job would mean leaving the
-drive plugged in permanently, which defeats the point (no off-site
-separation, and a single event like ransomware could take out the local
-backup and the "off-site" USB copy at once).
+Deliberately **not** a scheduled job. A scheduled job would mean leaving the drive plugged in permanently, which defeats the point (no off-site separation, and a single event like ransomware could take out the local backup and the "off-site" USB copy at once).
 
 Two ways to trigger a backup on demand:
 
-- Per-VM/LXC: Backup tab > **Backup Now** > select `usb-backup` as the
-  target.
-- Whole-lab "phantom job": a backup job pointed at `usb-backup` with a
-  deliberately long schedule (e.g. once a year) that's never actually meant
-  to run on schedule, just triggered manually with **Run now**. Used this
-  for backing up everything at once.
+- Per-VM/LXC: Backup tab > **Backup Now** > select `usb-backup` as the target.
+- Whole-lab "phantom job": a backup job pointed at `usb-backup` with a deliberately long schedule (e.g. once a year) that's never actually meant to run on schedule, just triggered manually with **Run now**. Used this for backing up everything at once.
 
-Retention on the USB datastore: kept the last [TODO: note retention count -
-course example keeps 3] backups.
+Retention on the USB datastore: kept the last 3 backups.
+
+Confirmed working end-to-end: ran a manual on-demand backup to `usb-backup`, verified the backup content in the PBS web UI, then re-ran the full unmount/unplug/replug/mount cycle and confirmed the datastore was reachable again afterward with no reconfiguration needed.
 
 ## Notes / gotchas
 
-[TODO: capture anything that went wrong here - UID mismatches, mount
-failures after replug, drive not showing up in `lsblk`, etc. This section in
-particular is a good candidate for an addendum file (e.g.
-`13a-usb-mount-troubleshooting-addendum.md`) if anything substantial comes
-up later]
+See the exFAT-vs-ext4 gotcha under **Preparing the drive** above, that was the one real snag in this section. UID mapping and the mount/unmount scripts worked as described in the course once the filesystem itself was correct.
+
+*Also, backing up to the USB takes a **LONG** time. This on-demand took 56 miutes. So, best to do this when ready to step away from the computer for a while.* 
 
 ## Review: repeatable USB backup process
 
