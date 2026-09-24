@@ -13,20 +13,19 @@ new Bucket**.
 
 Settings used:
 
-- Bucket name: `jht-proxmox-backups` [TODO: confirm actual bucket name
-  chosen]
+- Bucket name: `jht-proxmox-backups`
 - Bucket type: **Private**
 - Default encryption: **disabled** (PBS applies its own client-side
   encryption instead - no reason to pay for/rely on Backblaze's)
 - Object lock: **disabled**
 
-Wrote down the bucket name and bucket endpoint, both needed below.
+Wrote down the bucket name and the bucket's endpoint, both needed below. The endpoint for this bucket was `s3.us-east-005.backblazeb2.com`, note the region code embedded in it (`us-east-005`), **it matters later.**
 
 ## Backblaze application key
 
 Application Keys page > **Add a New Application Key**:
 
-- Name: [TODO: name chosen]
+- Name: `pbs-key`
 - Allow access to Buckets: **all**
 - Type of Access: **Read and Write**
 
@@ -37,8 +36,10 @@ immediately since the `applicationKey` is only shown once.
 
 PBS web UI > S3 Endpoints > **Add**:
 
-- S3 Endpoint ID: `remote-backup` [TODO: confirm name used]
-- Endpoint: (Backblaze bucket endpoint from above)
+- S3 Endpoint ID: `remote-backup`
+- Endpoint: `s3.us-east-005.backblazeb2.com`
+- **Region: `us-east-005`** (matching the region code in the endpoint
+  hostname, do not leave this on the default)
 - Path Style: checked
 - Access Key: Backblaze `keyID`
 - Secret Key: Backblaze `applicationKey`
@@ -48,7 +49,7 @@ PBS web UI > S3 Endpoints > **Add**:
 
 PBS web UI > **Add Datastore**:
 
-- Name: `remote-backup` [TODO: confirm name used]
+- Name: `remote-backup`
 - Datastore Type: **S3**
 - Local Cache: `/remote-backup` (a path on the PBS LXC's own disk used for
   cache data, not the actual backup storage)
@@ -85,8 +86,8 @@ Saved the generated key in more than one place, same logic as the 3/2/1 rule
 itself:
 
 - Added it to Vaultwarden (`https://passwords.local`)
-- Downloaded a local copy [TODO: note where the local copy was actually
-  saved - this should NOT go in the repo]
+- Downloaded a local copy, kept outside this repo (on the Windows management
+  host, not in any synced/cloud folder)
 
 **This key is never committed to the repo.** Losing it means the cloud
 backups become unrecoverable even though the encrypted data itself is still
@@ -99,22 +100,19 @@ storage:
 
 - Node: `pve`
 - Storage: `remote-backup`
-- Schedule: [TODO: note schedule chosen - course example is monthly]
-- Selection: [TODO: which VMs/LXCs]
+- Schedule: monthly
+- Selection: all current VMs/LXCs (Gitea, Vaultwarden, Uptime Kuma, CoreDNS,
+  Kali, ts-router, PBS itself)
 
-Retention: kept the last [TODO: note retention count - course example keeps
-3] backups.
+Retention: kept the last 3 backups.
 
 Created the job, then selected it and clicked **Run now** to test
 immediately rather than waiting on the schedule.
 
 Confirmed the backup landed by checking two places:
 
-- PBS web UI > `remote-backup` > Content > **Reload** - showed the backed-up
-  VMs/LXCs
-- Backblaze web UI > **Browse Files** - showed the same data as encrypted,
-  unreadable chunks (expected - only PBS/PVE with the encryption key can make
-  sense of it)
+- PBS web UI > `remote-backup` > Content > **Reload** - showed the backed-up VMs/LXCs
+- Backblaze web UI > **Browse Files** - showed the same data as encrypted, unreadable chunks (expected - only PBS/PVE with the encryption key can make sense of it)
 
 ### Testing file-level restore
 
@@ -141,5 +139,51 @@ Full 3/2/1 achieved with just the cloud leg. USB backups
 
 ## Notes / gotchas
 
-[TODO: capture anything that went wrong - bucket name typos, fingerprint
-mismatches, endpoint not populating buckets, etc.]
+**"Bad Request (400), failed to list buckets" when adding the datastore.**
+
+<small>*Note: when I left the session before, I shut down every app, including the CoreDNS. When I started this session, it was still off, so here is a reminder that I need to make sure where things stand operationally when I start up!*</small>
+
+Hit this the first time through the Add Datastore screen, with the bucket dropdown just spinning and failing. Worked through this roughly in order:
+
+1. Checked the application key's bucket scope in Backblaze. It was correctly
+   set to all buckets with full read/write, so this wasn't it.
+2. Compared the Endpoint field in the PBS S3 Endpoint config against the
+   actual bucket endpoint shown in Backblaze; they matched.
+3. **The actual cause: the Region field on the S3 Endpoint was left on its
+   default (`us-west-1`) instead of being set to match the bucket's real
+   region (`us-east-005`, visible in the endpoint hostname itself).** S3
+   request signing includes the region, so a mismatched region gets
+   rejected by Backblaze as a bad request, this produces the exact same
+   error as a bad key would, which is what made it confusing to track down.
+   Fixed by explicitly typing `us-east-005` into the Region field on the S3
+   Endpoint (PBS doesn't infer it from the endpoint hostname automatically).
+4. Setting the region fixed the signing issue, but the error persisted
+   because of a second, unrelated problem: DNS. See below.
+
+**DNS resolution was broken inside the PBS container the whole time.**
+`curl -I https://s3.us-east-005.backblazeb2.com` from the PBS LXC shell
+returned `Could not resolve host`. Root cause was two-fold:
+
+- The PBS LXC's nameserver had been set to `10.0.0.45` instead of
+  CoreDNS's actual address (`10.0.0.30`) during install, see the DNS gotcha
+  in `11-proxmox-backup-server-install.md`. Fixed with
+  `pct set 999 --nameserver 10.0.0.30` and a reboot.
+- Even after that fix, resolution still failed with `host unreachable`, a
+  routing-level error rather than a DNS answer. Turned out the CoreDNS LXC
+  itself (`10.0.0.30`) was **stopped**, visible as a greyed-out icon next to
+  it in the Proxmox server view versus the solid icons on every running
+  container. Nothing was listening at that address at all. Started it back
+  up in the Proxmox web UI, confirmed "Start at boot" was also enabled so
+  a host reboot doesn't silently take it down again.
+
+Once both of those were fixed, `curl -I` against the Backblaze endpoint
+returned a normal HTTP response, and the datastore picked up the bucket
+immediately with no further changes needed. The application key and bucket
+config had been correct from the start; every symptom traced back to the
+region field and the DNS chain.
+
+**Lesson for next time:** a generic-looking "Bad Request" from an S3-style
+API can hide more than one problem stacked on top of each other (a config
+mismatch plus a network issue). Test raw connectivity (`curl`) from the
+actual container involved before assuming the credentials or bucket
+settings are wrong.
