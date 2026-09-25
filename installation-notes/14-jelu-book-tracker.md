@@ -31,6 +31,7 @@ Bonus: Jelu can scan an ISBN barcode with the phone camera. That needs HTTPS, wh
 | URL | `https://books.lab` |
 | App port | `11111` (internal to Docker only; not published to the LAN) |
 | Compose folder | `/root/jelu` |
+| Extra config | `/root/jelu/config/application.yml` (Inventaire metadata fallback) |
 | Login | Stored in Vaultwarden |
 
 ## Step 1: Create the Docker LXC
@@ -325,9 +326,10 @@ Tested on: TODO (device / iOS version)
 
 ## Step 9: Housekeeping
 
-- **Backups:** check Datacenter > Backup. If the daily job is set to back up specific CTIDs rather than "All", add the new CTID.
-- **Uptime Kuma:** add an HTTPS monitor for `https://books.lab`.
-- **README:** add a row to the App Table.
+- **Backups:** Datacenter > Backup > daily job: added CT 1003 to the selection. Ran it on demand to confirm; backup completed successfully.
+- **Uptime Kuma:** added an HTTP(s) monitor for `https://books.lab`. Settings: 60 s interval, Retries 1, Domain Name Expiry off (`.lab` isn't a public domain), **Ignore TLS/SSL errors on**.
+  - Without Ignore TLS the monitor sat at Pending with `unable to get local issuer certificate`. The Kuma LXC (`10.0.0.20`) doesn't trust Jelu's Caddy CA; that CA is only installed on Windows and the phones. Ignoring TLS is fine for an internal lab check.
+- **README:** added a Jelu row to the App Table.
 
 ## Troubleshooting
 
@@ -338,15 +340,25 @@ Tested on: TODO (device / iOS version)
 | 502 from Caddy right after start | Jelu still starting; wait a minute and check `docker compose logs jelu` |
 | Camera scan button missing or blocked | Page must be on `https://` with a trusted cert; recheck Step 7 on the phone |
 | Scan reads the digits but no book appears | Scanned from the top search bar (searches my library only). Use Add book > Auto Fill > Fetch Book |
-| Fetch Book in Auto Fill returns nothing | Built-in Calibre lookup can come back empty. Add Inventaire as a fallback in `/root/jelu/config/application.yml` (see below), then `docker compose restart jelu` |
+| "exception was raised while calling metadata plugin" / log shows `Unexpected EOF in prolog` | Calibre returned nothing. Inventaire fallback in `/root/jelu/config/application.yml` (see below), then `docker compose restart jelu` |
+| Library empty in one browser but books show elsewhere | Clear that browser's site data for `books.lab` (Brave: `brave://settings/content/all`), then log in again |
+| Kuma monitor: `unable to get local issuer certificate` | Kuma doesn't trust this Caddy's CA. Edit monitor > tick Ignore TLS/SSL errors |
 | Works at home, not away | Tailscale off on the phone |
 | `books.lab` won't load on a phone at home on Wi-Fi | Tailscale must be on at home too (Split DNS is what resolves `.lab`) |
 | iPhone still shows a cert warning after installing the profile | Turn on full trust: Settings > General > About > Certificate Trust Settings |
 | iPhone: tapping the `.crt` does nothing | Open it from the Mail app, Files, or AirDrop, not the Gmail app |
 
-### Optional: fallback metadata source
+### Fallback metadata source (Inventaire)
 
-Not needed so far (Calibre lookup worked), but if fetches start failing, this adds Inventaire (free, no API key) as a backup. Create `/root/jelu/config/application.yml`:
+The first scan worked, but the next import failed with "exception was raised while calling metadata plugin". The log showed Calibre returning an empty reply:
+
+```
+ERROR ... FetchMetadataService : errors from plugin calibre : [MetadataError(sourcePlugin=calibre, errorType=EXCEPTION_CAUGHT, pluginErrorMessage=Unexpected EOF in prolog
+```
+
+"Unexpected EOF in prolog" at `[1,0]` means Jelu expected XML back from `fetch-ebook-metadata` and got an empty file. Calibre's lookup is known to be flaky (see Jelu GitHub issues #127, #130, #226).
+
+Fix: added Inventaire (free, no API key) as a second provider. Created `/root/jelu/config/application.yml`:
 
 ```yaml
 jelu:
@@ -357,4 +369,28 @@ jelu:
       config: "en"
 ```
 
-Then `docker compose restart jelu`. Google Books can also be added, but it needs a free API key and only searches by ISBN. See https://bayang.github.io/jelu-web/configuration/.
+Then:
+
+```bash
+docker compose restart jelu
+docker compose logs jelu | grep -i "started" | tail -n 1
+```
+
+Imports worked again after the restart. Google Books is a further option if needed (free API key, ISBN-only searches); see https://bayang.github.io/jelu-web/configuration/.
+
+## Resolved: desktop Brave showed an empty library
+
+Books added from the phone showed up in My Books on the phone (Brave on Android) and in Chrome on the Windows host, but **not** in Brave on the Windows host. Same single Jelu user, same server.
+
+Did not help:
+- Checking for a second user (only one user exists)
+- Hard refresh (`Ctrl+Shift+R`)
+- Turning Brave Shields off for `books.lab`
+
+**Fix:** clear Brave's stored data for the site.
+
+1. Go to `brave://settings/content/all`
+2. Search `books.lab` and delete its data
+3. Reload `https://books.lab` and log in again
+
+The library appeared right away. Brave had kept stale site data from the first visit (before any books existed), and a hard refresh does not clear stored site data. If a lab web app ever looks "stuck" in one browser but works in another, clear that site's data first.
