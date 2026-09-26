@@ -255,12 +255,13 @@ Added `CLAUDE.md` and `README.md` in later commits. First `git add CLAUDE.md` fa
 
 ## Step 10: Lab integration
 
-- [ ] Add VM 201 to the local backup job (daily, keep 7)
-- [ ] Add VM 201 to the PBS cloud backup job (Backblaze B2, monthly, keep 3)
-- [ ] Add VM 201 to the USB backup job
-- [ ] Uptime Kuma: ping monitor for `kali-python.lab`
-- [ ] Gitea: mirror `python-fun-for-cybersecurity` (see `functional-docs/github-mirroring.md`)
-- [ ] Start at boot: decide (Options tab). Probably off, since it's a workstation and not a service.
+- [x] Add VM 201 to the local backup job (daily, keep 7)
+- [x] Add VM 201 to the PBS cloud backup job (Backblaze B2, monthly, keep 3)
+- [x] Add VM 201 to the USB backup job
+- [x] Uptime Kuma: ping monitor for `kali-python.lab`
+- [x] Gitea: mirror `python-fun-for-cybersecurity` (see `functional-docs/github-mirroring.md`)
+*Note: Missed the mirror checkbox the first time, which made a one-time copy. Gitea can't convert a copy to a mirror, so I deleted it and migrated again.*
+- [x] Start at boot: decide (Options tab). Probably off, since it's a workstation and not a service.
 
 ## What's next
 
