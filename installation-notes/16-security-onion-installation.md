@@ -1,4 +1,4 @@
-# 15 - Security Onion Installation (Eval Mode)
+# 16 - Security Onion Installation (Eval Mode)
 
 ## Purpose
 
@@ -49,7 +49,7 @@ VM numbering convention: 200-range is for VMs (LXCs use the ranges elsewhere in 
 | CPU | 4 cores, type `host` (for AES-NI passthrough) |
 | Memory | 10240 MiB, ballooning **off** |
 | net0 | VirtIO, bridge vmbr0 (management) |
-| net1 | VirtIO, bridge vmbr0 (added after initial VM creation, via Hardware → Add → Network Device; this becomes the monitor interface) |
+| net1 | VirtIO, bridge vmbr0, firewall enabled (added after initial VM creation, via Hardware → Add → Network Device; this becomes the monitor interface) |
 
 Ballooning is deliberately off, consistent with how other VMs in this lab are configured (a VM reserves its full assigned RAM whether or not it's using it).
 
@@ -89,12 +89,13 @@ Logged in as `root`, ran `sudo so-setup`, and selected:
 
 ## Result
 
-Confirmed via `sudo so-status`: all 18 containers running and healthy, including `so-suricata` and `so-zeek`. See `15a-bond0-mtu-mismatch-addendum.md` for a network issue hit and resolved during this install.
+Confirmed via `sudo so-status`: all 18 containers running and healthy, including `so-suricata` and `so-zeek`. See `16a-bond0-mtu-mismatch-addendum.md` for a network issue hit and resolved during this install, and `16b-vmbr0-traffic-mirroring-addendum.md` for the additional Proxmox-host-level fix required before the monitor interface could actually see lab traffic.
 
 Access: `https://10.0.0.55` (self-signed cert warning is expected), login `brie@homelab.local`.
+
+Verified working end to end: generated ping and `nmap -sV` traffic from `kali-python` against another lab host, confirmed matching alerts appeared in the SOC Alerts page (`GPL ICMP PING *NIX`, `ET SCAN Nmap Scripting Engine User-Agent Detected`, `ET SCAN Possible Nmap User-Agent Observed`).
 
 ## Follow-ups / not yet done
 
 - No CoreDNS entry yet for `security-onion` (accessed by IP only for now)
-- Haven't yet verified the monitor interface is actually capturing lab traffic (planned: generate test traffic from Kali against another lab host and check for entries in the SOC Alerts/Hunt views)
 - Whole-home-network monitoring (Option B, requiring a mirror port or TAP) was considered but not pursued; lab-only monitoring was chosen instead

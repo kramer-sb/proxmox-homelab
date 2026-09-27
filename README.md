@@ -30,6 +30,9 @@ proxmox-homelab/
     13-usb-drive-backups.md
     14-jelu-book-tracker.md
     15-kali-python-vm.md
+    16-security-onion-installation.md
+    16a-bond0-mtu-mismatch-addendum.md
+    16b-vmbr0-traffic-mirroring-addendum.md
   functional-docs/
     proxmox.md
     repo-workflow.md
@@ -42,6 +45,7 @@ proxmox-homelab/
     backup-strategy.md
     proxmox-backup-server.md
     kali-python.md
+    gmktec-nucbox-g10-pro-hardware.md
   configs/
 ```
 
@@ -113,18 +117,21 @@ Every app/service in the lab gets a row. Add one as soon as something new comes 
 
 As of Chapter 3, all machines run on **static IPs** (increments of 5, starting at `10.0.0.5` for the Proxmox host) instead of DHCP reservations, and are reachable by name via the CoreDNS server (`10.0.0.30`) rather than raw IP. Apps fronted by Caddy use `https://` with no port number; Caddy terminates TLS with a self-signed local cert (`tls internal`) and forwards internally.
 
+Sorted by IP address below, so gaps or the next open `.5` increment are easy to spot at a glance.
+
 | App Name | IP Address | Service Ports | Access Type | Installation Method | Machine Type | Installation Notes | Functional Doc |
 |---|---|---|---|---|---|---|---|
 | Proxmox VE (host) | `10.0.0.5` (static) | 8006 (web UI), 22 (SSH) | Web UI (MFA) for management, SSH (key-only) for shell | ISO install (manual) | Bare metal - GMKtec NucBox G10 Pro | [01-installing-proxmox.md](installation-notes/01-installing-proxmox.md), [02-security-hardening.md](installation-notes/02-security-hardening.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md) | [proxmox.md](functional-docs/proxmox.md) |
 | Gitea | `10.0.0.10` (static) | 3000 (HTTP, loopback only), 80/443 via Caddy, 22 (SSH push/pull) | `https://gitea.lab` for web UI (Caddy reverse proxy, self-signed cert), SSH (key-based) for git push/pull | Community script (Proxmox Helper Scripts, LXC, Advanced Install) | LXC on Proxmox | [03-installing-gitea.md](installation-notes/03-installing-gitea.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md), [08-ssl-termination.md](installation-notes/08-ssl-termination.md) | [gitea.md](functional-docs/gitea.md) |
-| Uptime Kuma | `10.0.0.20` (static) | 3001 (HTTP, loopback only), 80/443 via Caddy | `https://kuma.lab` for web UI (Caddy reverse proxy, self-signed cert) | Community script (Proxmox Helper Scripts, LXC, Advanced Install) | LXC on Proxmox | [05-installing-uptime-kuma.md](installation-notes/05-installing-uptime-kuma.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md), [08-ssl-termination.md](installation-notes/08-ssl-termination.md) | [uptime-kuma.md](functional-docs/uptime-kuma.md) |
 | Vaultwarden | `10.0.0.15` (static) | 80, 443 (HTTPS via Caddy reverse proxy) | `https://vaultwarden.lab` via browser (Caddy reverse proxy, self-signed cert), or Bitwarden app/extension | Docker LXC (community script) + Docker Compose (Vaultwarden + Caddy) | LXC on Proxmox (Docker) | [04-installing-vaultwarden-and-caddy.md](installation-notes/04-installing-vaultwarden-and-caddy.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md), [08-ssl-termination.md](installation-notes/08-ssl-termination.md) | [vaultwarden.md](functional-docs/vaultwarden.md) |
-| CoreDNS | `10.0.0.30` (static) | 53 (DNS) | Internal DNS only - no web UI. Resolves `.lab` hostnames for the lab, forwards everything else upstream | Manual install | LXC on Proxmox | [07-home-lab-dns.md](installation-notes/07-home-lab-dns.md) | [coredns.md](functional-docs/coredns.md) |
+| Uptime Kuma | `10.0.0.20` (static) | 3001 (HTTP, loopback only), 80/443 via Caddy | `https://kuma.lab` for web UI (Caddy reverse proxy, self-signed cert) | Community script (Proxmox Helper Scripts, LXC, Advanced Install) | LXC on Proxmox | [05-installing-uptime-kuma.md](installation-notes/05-installing-uptime-kuma.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md), [08-ssl-termination.md](installation-notes/08-ssl-termination.md) | [uptime-kuma.md](functional-docs/uptime-kuma.md) |
 | Kali Linux | `10.0.0.25` (static) | N/A (workstation VM, no persistent service) | Console/desktop access via Proxmox | Manual ISO install | VM on Proxmox | [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md) | - |
-| Kali Linux (Python course) | `10.0.0.50` (static) | 22 (SSH, key-only) | `ssh kali-python` from the Windows host; VS Code Remote-SSH for coding. Console via Proxmox | Manual ISO install | VM on Proxmox | [15-kali-python-vm.md](installation-notes/15-kali-python-vm.md) | [kali-python.md](functional-docs/kali-python.md) |
+| CoreDNS | `10.0.0.30` (static) | 53 (DNS) | Internal DNS only - no web UI. Resolves `.lab` hostnames for the lab, forwards everything else upstream | Manual install | LXC on Proxmox | [07-home-lab-dns.md](installation-notes/07-home-lab-dns.md) | [coredns.md](functional-docs/coredns.md) |
 | Tailscale Subnet Router (ts-router) | `10.0.0.35` (static) | N/A (relay only, no web UI) | No direct access; advertises the `10.0.0.0/24` route to the tailnet so any Tailscale-connected device (including off-network devices, e.g. a phone on cellular data) can reach every lab service by IP or `.lab` domain | Community script (Proxmox Helper Scripts, LXC) + `tailscale up` / `tailscale set --advertise-routes` | LXC on Proxmox | [09-tailscale-remote-access.md](installation-notes/09-tailscale-remote-access.md), [09a-tailscale-icmp-troubleshooting-addendum.md](installation-notes/09a-tailscale-icmp-troubleshooting-addendum.md), [09b-mobile-remote-access-testing.md](installation-notes/09b-mobile-remote-access-testing.md) | [tailscale.md](functional-docs/tailscale.md) |
 | Proxmox Backup Server (PBS) | `10.0.0.40` (static) | 8007 (web UI) | Web UI (root@pam) for managing datastores and S3 endpoints; PVE talks to it directly for backup/restore, no manual access needed day-to-day | Community script (Proxmox Helper Scripts, LXC) + post-install script | LXC on Proxmox | [11-proxmox-backup-server-install.md](installation-notes/11-proxmox-backup-server-install.md), [12-cloud-backups-backblaze-b2.md](installation-notes/12-cloud-backups-backblaze-b2.md), [13-usb-drive-backups.md](installation-notes/13-usb-drive-backups.md) | [proxmox-backup-server.md](functional-docs/proxmox-backup-server.md) |
 | Jelu (book tracker) | `10.0.0.45` (static) | 443 via Caddy (Jelu on 11111, internal to Docker only) | `https://books.lab` from any Tailscale-connected device, including phones (ISBN barcode scanning needs HTTPS + trusted Caddy CA) | Community script (Proxmox Helper Scripts, Docker LXC) + Docker Compose (Jelu + Caddy) | LXC on Proxmox | [14-jelu-book-tracker.md](installation-notes/14-jelu-book-tracker.md) | - |
+| Kali Linux (Python course) | `10.0.0.50` (static) | 22 (SSH, key-only) | `ssh kali-python` from the Windows host; VS Code Remote-SSH for coding. Console via Proxmox | Manual ISO install | VM on Proxmox | [15-kali-python-vm.md](installation-notes/15-kali-python-vm.md) | [kali-python.md](functional-docs/kali-python.md) |
+| Security Onion | `10.0.0.55` (static) | 443 (SOC web UI) | `https://10.0.0.55` (accessed by IP, no `.lab` DNS entry yet), restricted to the `10.0.0.0/24` LAN (not exposed over Tailscale) | Official ISO + `so-setup` wizard, Eval mode | VM on Proxmox (2 NICs: management + a bonded monitor interface on `vmbr0`, mirrored via a `tc`-based Proxmox hookscript) | [16-security-onion-installation.md](installation-notes/16-security-onion-installation.md), [16a-bond0-mtu-mismatch-addendum.md](installation-notes/16a-bond0-mtu-mismatch-addendum.md), [16b-vmbr0-traffic-mirroring-addendum.md](installation-notes/16b-vmbr0-traffic-mirroring-addendum.md) | - |
 
 *Removed per the course's Chapter 2 cleanup: the Ubuntu 24.04 LXC (CT 100) built in Chapter 1, and the practice Ubuntu/Debian VMs/LXCs from Section 2.3/2.4 - no longer running, so they don't have rows here.*
 
