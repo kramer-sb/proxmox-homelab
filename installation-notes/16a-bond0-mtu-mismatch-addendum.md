@@ -2,7 +2,7 @@
 
 ## Symptom
 
-During the Security Onion 3.3.0 `so-setup` wizard (Eval mode, see `15-security-onion-installation.md`), the install ran for over an hour, all 1,869 Salt states succeeded (`Succeeded: 1869 (changed=1195)`, `Failed: 0`), but setup still exited with:
+During the Security Onion 3.3.0 `so-setup` wizard (Eval mode, see `16-security-onion-installation.md`), the install ran for over an hour, all 1,869 Salt states succeeded (`Succeeded: 1869 (changed=1195)`, `Failed: 0`), but setup still exited with:
 
 ```
 Install had a problem. Please see /root/sosetup.log for details.
