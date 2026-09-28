@@ -4,6 +4,7 @@
 credentials.json
 secrets.yml
 *.tfstate
+CLAUDE.md
 
 # staged for manual deletion, not part of the repo
 _to_delete/
