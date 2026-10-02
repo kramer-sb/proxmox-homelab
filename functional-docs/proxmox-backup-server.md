@@ -36,8 +36,25 @@ Each datastore is linked into PVE as its own storage object (Datacenter > Storag
 
 Two ways to restore, both available from the PVE side once a datastore is linked:
 
-- **Full restore**: select the backup under the storage object's Backups list, click Restore. If the target VM/LXC is running, this creates a new copy; if it's shut down first, it overwrites in place.
+- **Full restore**: select the backup under the storage object's Backups list, click Restore. The ID field in the dialog decides what happens. A new, unused ID creates a separate copy next to the original. Using the original's ID overwrites that guest and permanently erases its current disks, so the guest must be stopped first (and not protected).
 - **File restore**: select the backup, click **File Restore**, browse the filesystem, download just the file(s) needed. Useful when only one thing broke and a full restore would undo other, wanted changes.
+
+Cloud backups are client-side encrypted, so any restore from them needs the encryption key. Keep a copy outside the lab.
+
+### Testing a restore safely
+
+1. Select a backup, click Restore, and set the CT ID to a spare number such as 9000.
+2. Tick **Unique** and leave **Start after restore** unticked, so the copy cannot clash with the original's MAC address or IP.
+3. Confirm the task ends with TASK OK, then remove the test container (More, then Remove). Double check the ID before removing.
+
+### Containers that need TUN access (2000 and 2001)
+
+Proxmox skips custom LXC options on restore and prints a warning. After restoring either container, add these two lines to `/etc/pve/lxc/<id>.conf` on the host before starting it:
+
+```
+lxc.cgroup2.devices.allow: c 10:200 rwm
+lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+```
 
 ## Retention
 
