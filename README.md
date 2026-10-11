@@ -33,6 +33,8 @@ proxmox-homelab/
     16-security-onion-installation.md
     16a-bond0-mtu-mismatch-addendum.md
     16b-vmbr0-traffic-mirroring-addendum.md
+    17-windows-endpoint-lab-vm.md
+    17a-windows-vm-gotchas-addendum.md
   functional-docs/
     proxmox.md
     repo-workflow.md
@@ -46,6 +48,7 @@ proxmox-homelab/
     proxmox-backup-server.md
     kali-python.md
     gmktec-nucbox-g10-pro-hardware.md
+    windows-endpoint-lab-vm.md
   configs/
 ```
 
@@ -132,6 +135,7 @@ Sorted by IP address below, so gaps or the next open `.5` increment are easy to 
 | Jelu (book tracker) | `10.0.0.45` (static) | 443 via Caddy (Jelu on 11111, internal to Docker only) | `https://books.lab` from any Tailscale-connected device, including phones (ISBN barcode scanning needs HTTPS + trusted Caddy CA) | Community script (Proxmox Helper Scripts, Docker LXC) + Docker Compose (Jelu + Caddy) | LXC on Proxmox | [14-jelu-book-tracker.md](installation-notes/14-jelu-book-tracker.md) | - |
 | Kali Linux (Python course) | `10.0.0.50` (static) | 22 (SSH, key-only) | `ssh kali-python` from the Windows host; VS Code Remote-SSH for coding. Console via Proxmox | Manual ISO install | VM on Proxmox | [15-kali-python-vm.md](installation-notes/15-kali-python-vm.md) | [kali-python.md](functional-docs/kali-python.md) |
 | Security Onion | `10.0.0.55` (static) | 443 (SOC web UI) | `https://10.0.0.55` (accessed by IP, no `.lab` DNS entry yet), restricted to the `10.0.0.0/24` LAN (not exposed over Tailscale) | Official ISO + `so-setup` wizard, Eval mode | VM on Proxmox (2 NICs: management + a bonded monitor interface on `vmbr0`, mirrored via a `tc`-based Proxmox hookscript) | [16-security-onion-installation.md](installation-notes/16-security-onion-installation.md), [16a-bond0-mtu-mismatch-addendum.md](installation-notes/16a-bond0-mtu-mismatch-addendum.md), [16b-vmbr0-traffic-mirroring-addendum.md](installation-notes/16b-vmbr0-traffic-mirroring-addendum.md) | - |
+| Windows 11 Endpoint Lab (win11-intune-lab) | `10.0.0.60` (static) | 3389 (RDP) | `mstsc` Remote Desktop from the Windows host (accessed by IP, no `.lab` DNS entry); console via Proxmox | Manual ISO install (Windows 11 Enterprise Evaluation, VirtIO drivers) | VM on Proxmox (VM 203; UEFI, virtual TPM) | [17-windows-endpoint-lab-vm.md](installation-notes/17-windows-endpoint-lab-vm.md), [17a-windows-vm-gotchas-addendum.md](installation-notes/17a-windows-vm-gotchas-addendum.md) | [windows-endpoint-lab-vm.md](functional-docs/windows-endpoint-lab-vm.md) |
 
 *Removed per the course's Chapter 2 cleanup: the Ubuntu 24.04 LXC (CT 100) built in Chapter 1, and the practice Ubuntu/Debian VMs/LXCs from Section 2.3/2.4 - no longer running, so they don't have rows here.*
 
