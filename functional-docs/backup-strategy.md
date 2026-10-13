@@ -35,7 +35,7 @@ Both are implemented in this lab:
 
 Local, cloud, and USB backups each have their own retention policy so storage doesn't grow unbounded:
 
-- Local: keep last 7 backups (daily schedule, so one week of history)
+- Local: keep last 3 backups (daily schedule, so three days of history). This is a 100 GB partition shared with ISOs and templates, and one nightly run is about 13.5 GiB, so 7 would not fit. The Windows VM is left out of the local job for the same reason.
 - Cloud: keep last 3 backups (monthly schedule)
 - USB: keep last 3 backups (on-demand, no fixed schedule)
 

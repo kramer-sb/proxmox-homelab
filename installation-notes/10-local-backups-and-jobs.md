@@ -66,7 +66,9 @@ Datacenter > Backup tab > **Add**. Configured:
 - Selection: all current lab services (Gitea, Vaultwarden, Uptime Kuma,
   CoreDNS, Kali, ts-router)
 
-Retention tab: set to keep the last 7 backups (one week of local backups).
+Retention tab: I set this to keep the last 7 backups (one week of local backups).
+
+**Update 2026-10-13:** The job turned out to have no retention at all, so it was keeping every backup. Each nightly run was adding about 13.5 GiB (Kali alone is about 7.3 GiB of that), and `local` is only a 100 GB partition that also holds ISOs and container templates, with about 64 GB used. Keeping 7 would not have fit either, since 7 nights is roughly 95 GiB. I changed the job to **Keep Last = 3**, which is about 40 GiB of backups. Lesson: size retention from the nightly total times the number kept, and check the storage's free space before picking a number.
 
 Clicked **Create**. Job showed up in the Datacenter Backup tab list.
 
