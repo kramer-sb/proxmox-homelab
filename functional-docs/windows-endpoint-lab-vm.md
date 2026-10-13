@@ -52,4 +52,4 @@ Uptime Kuma, TCP Port monitor: friendly name `Windows Endpoint Lab RDP`, hostnam
 
 ## Snapshots and backups
 
-Snapshot names must start with a letter. Current snapshots: `clean-install-before-enroll`, `enrolled`, `bitlocker-static-ip`. An on-demand backup to the `usb-backup` datastore (Proxmox Backup Server, encrypted) exists from before enrollment. See [proxmox-backup-server.md](proxmox-backup-server.md).
+Snapshot names must start with a letter. Current snapshots, oldest first: `clean-install-before-enroll`, `enrolled`, `bitlocker-static-ip`, `before-firewall-settings`, `firewall-settings-applied`, `before-sysmon`, `sysmon-installed`, `before-conditional-access`. The only on-demand backup to the `usb-backup` datastore (Proxmox Backup Server, encrypted) is from before enrollment, so it does not include the policies, BitLocker or Sysmon. The VM is not part of the scheduled local job because the `local` storage is too small for a 100 GiB disk. See [proxmox-backup-server.md](proxmox-backup-server.md).

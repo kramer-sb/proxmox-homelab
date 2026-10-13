@@ -62,7 +62,9 @@ Set per backup job, on the Retention tab when creating/editing the job in PVE (D
 
 ## Encryption
 
-The `remote-backup` (cloud) datastore uses a client-side encryption key, generated when the storage was linked in PVE. Backblaze only ever sees encrypted chunks. The key itself lives in Vaultwarden and as a local downloaded copy; it is not committed to this repo. The USB datastore does not use a separate encryption key, it relies on the drive itself being kept physically secure instead.
+The `remote-backup` (cloud) datastore uses a client-side encryption key, generated when the storage was linked in PVE. Backblaze only ever sees encrypted chunks. The key itself lives in Vaultwarden and as a local downloaded copy, plus a copy in a password manager that is not hosted on this Proxmox host; it is not committed to this repo.
+
+The `usb-backup` storage has its own, separate client-side encryption key, added on 2026-10-02. Backups made before that date (the September 24 container backups) are not encrypted, and backups made after it are. Both keys live on the Proxmox host under `/etc/pve/priv/storage/` (one `.enc` file per storage), so if the host is lost, the keys go with it. Keep a copy of each key off the host. On 2026-10-13 I saved both to a password manager that is not hosted on the lab and checked each copy against the original by comparing SHA-256 fingerprints with newlines stripped.
 
 ## Operational dependency worth knowing
 
