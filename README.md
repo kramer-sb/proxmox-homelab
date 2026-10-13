@@ -35,6 +35,7 @@ proxmox-homelab/
     16b-vmbr0-traffic-mirroring-addendum.md
     17-windows-endpoint-lab-vm.md
     17a-windows-vm-gotchas-addendum.md
+    18-backup-review-retention-and-keys.md
   functional-docs/
     proxmox.md
     repo-workflow.md
