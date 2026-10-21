@@ -21,7 +21,7 @@ A dedicated Linux box for the Python course that I can code on from VS Code on W
 | Disk | 80 GB on `local-lvm` (SCSI, Discard + SSD emulation + IO thread) |
 | Network | `vmbr0`, VirtIO |
 | Python | 3.14.7 (shipped with Kali 2026.2) |
-| Access | SSH key-only from Windows; VS Code Remote-SSH |
+| Access | SSH key-only from Windows; VS Code Remote-SSH; RDP (xrdp) through an SSH tunnel, see Step 11 |
 | Repo on VM | `~/python-fun-for-cybersecurity` |
 | Login | Stored in Vaultwarden |
 
@@ -262,6 +262,50 @@ Added `CLAUDE.md` and `README.md` in later commits. First `git add CLAUDE.md` fa
 - [x] Gitea: mirror `python-fun-for-cybersecurity` (see `functional-docs/github-mirroring.md`)
 *Note: Missed the mirror checkbox the first time, which made a one-time copy. Gitea can't convert a copy to a mirror, so I deleted it and migrated again.*
 - [x] Start at boot: decide (Options tab). Probably off, since it's a workstation and not a service.
+
+## Step 11: GUI over RDP (xrdp) for the web app pentesting course
+
+The JHT Web App Pentesting course needs Burp Suite, which needs a desktop. The Proxmox console works, but RDP gives proper clipboard and resizing. xrdp is bound to loopback and reached through an SSH tunnel, so port 3389 is never open on the network and the only way in is the key-only SSH login.
+
+On Kali (Xfce was already installed, so only xrdp is needed):
+
+```bash
+sudo apt install -y xrdp
+echo xfce4-session > ~/.xsession
+sudo adduser xrdp ssl-cert
+sudo systemctl enable --now xrdp
+sudo sed -i 's|^port=3389|port=tcp://127.0.0.1:3389|' /etc/xrdp/xrdp.ini
+grep '^port=' /etc/xrdp/xrdp.ini      # first line should be port=tcp://127.0.0.1:3389
+sudo systemctl restart xrdp
+ss -tln | grep 3389                    # should show 127.0.0.1:3389, not 0.0.0.0
+```
+
+The other `port=` lines in `xrdp.ini` (`-1`, `ask5900`, `ask3389`) belong to the session sections. Leave them alone.
+
+To connect from Windows (plain cmd works):
+
+```
+ssh -N -L 3390:localhost:3389 kali-python
+```
+
+Leave that window open (it prints nothing when it works), then open `mstsc` and connect to `localhost:3390`. At the xrdp login screen leave Session on **Xorg** and log in as `brie`.
+
+Routine: start the VM in Proxmox, do not log in on the console, open the tunnel, connect with mstsc. Away from home, Tailscale has to be connected first so `kali-python` resolves.
+
+Gotchas:
+
+- **Do not be logged in on the Proxmox console as the same user.** Xrdp and a local desktop login for `brie` fight each other and the symptom is a black screen. Check with `loginctl list-sessions`. A lone `lightdm` greeter on `seat0` is fine. Log out of the console session if a `brie` session has a seat.
+- **xrdp logs in with the Kali account password, not the SSH key.** The key passphrase and the account password are different secrets. I had the wrong account password at the `sudo` prompt (`Sorry, try again`) and reset it from the Proxmox node shell through the guest agent:
+
+  ```bash
+  qm guest exec 201 -- bash -c 'echo "brie:<temporary-password>" | chpasswd'
+  ```
+
+  The first attempt returned `chpasswd: line 1: missing new password` because the host shell expanded special characters inside double quotes. Single quotes around the whole command and a plain letters-and-digits temporary password fixed it. Then `passwd` on Kali to set the real one, saved to Vaultwarden. The temporary password stays in the node's shell history, so change it right away.
+- Closing the RDP window only disconnects; the session keeps running. Use Log Out in Xfce to end it.
+- Inside the RDP session, Burp and Firefox both run locally on the VM, so the Burp proxy settings are the usual `127.0.0.1:8080` with no port forwarding.
+
+Open item: the VM has 4096 MB of RAM (balloon minimum 2048). Xfce, Firefox and Burp together are tight. Check the host's free memory first, then consider 6144 MB with the minimum raised to 4096.
 
 ## What's next
 
