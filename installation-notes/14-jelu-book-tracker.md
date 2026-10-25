@@ -262,15 +262,13 @@ Same idea as Android: the phone needs Tailscale (to reach the lab and resolve `.
 ### 1. Install and sign in to Tailscale
 
 1. App Store > install **Tailscale**.
-2. Sign in. Two options:
-   - **Sign in with my account** (simplest). The phone shows up as one of my devices.
-   - **Invite the kid as their own user** from the Tailscale admin console (Users > Invite). This keeps their devices separate, and lets me restrict them with access controls later. Check the free plan's current user limit first.
+2. Sign in as their own user. Invite the kid from the Tailscale admin console (Users > Invite) and have them sign in with that login. Do **not** sign in with my account: my account has full access to the lab, so a phone signed in as me bypasses the access controls. Check the free plan's current user limit first, then add the two grants from `20-tailscale-access-controls.md` for their login.
 3. Allow the VPN configuration when iOS asks.
 4. Leave **Use Tailscale DNS** on (it is on by default). iOS accepts the subnet route automatically; nothing else to set.
 
 > Screen Time note: if the kid's device has Content & Privacy Restrictions on, "VPN" or profile installs may be blocked. Allow them temporarily from the parent's Screen Time settings.
 
-> Access note: a device on my Tailscale account can reach the **whole** lab subnet (Proxmox UI, Vaultwarden, etc.), not just Jelu. The services are still password protected, but if I want the kids limited to Jelu only, invite them as separate users and add an ACL in the admin console that only allows `10.0.0.45:443`. TODO: decide.
+> Access note: the access controls are now locked down (see `20-tailscale-access-controls.md`). Only my own account can reach the lab subnet. A kid's login gets nothing until I add the two grants for it, which limit it to `10.0.0.45:443` plus DNS to CoreDNS. The services are also password protected.
 
 ### 2. Get the certificate onto the iPhone
 

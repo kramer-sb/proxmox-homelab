@@ -73,6 +73,12 @@ Get-DnsClientNrptPolicy
 
 Look for a `Namespace : .lab` entry pointing at `100.100.100.100` (Tailscale's MagicDNS resolver). Note that `nslookup` does not respect NRPT policy and will appear to fail even when resolution is actually working; use a browser or `Resolve-DnsName` in PowerShell to test instead.
 
+## 7. Access controls
+
+The default policy allows every user and device to reach everything, including the whole lab subnet. Replace it so only my own account has full access and nobody else gets anything until a rule names them. Remove the default `ssh` and `nodeAttrs` sections unless you use Tailscale SSH or Funnel. The full policy, how to add a limited user, and the reasoning are in `../installation-notes/20-tailscale-access-controls.md`.
+
+Check that Tailscale SSH is off on each device with `tailscale debug prefs | grep -i ssh`. It should show `"RunSSH": false`. Do not sign family devices in with the admin account; invite them as their own users.
+
 ## Verifying it works
 
 From a device NOT on the home network (phone on cellular data, Wi-Fi off, with the Tailscale app installed and connected):
