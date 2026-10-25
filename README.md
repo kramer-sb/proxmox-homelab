@@ -36,6 +36,8 @@ proxmox-homelab/
     17-windows-endpoint-lab-vm.md
     17a-windows-vm-gotchas-addendum.md
     18-backup-review-retention-and-keys.md
+    19-wazuh-siem.md
+    19a-wazuh-firewall-events-addendum.md
   functional-docs/
     proxmox.md
     repo-workflow.md
@@ -50,6 +52,8 @@ proxmox-homelab/
     pbs-encryption-key-backup.md
     kali-python.md
     gmktec-nucbox-g10-pro-hardware.md
+    github-mirroring.md
+    wazuh.md
     windows-endpoint-lab-vm.md
   configs/
 ```
