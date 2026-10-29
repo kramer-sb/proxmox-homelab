@@ -39,6 +39,7 @@ proxmox-homelab/
     19-wazuh-siem.md
     19a-wazuh-firewall-events-addendum.md
     20-tailscale-access-controls.md
+    21-hackrange-lab-vm.md
   functional-docs/
     proxmox.md
     repo-workflow.md
@@ -56,6 +57,7 @@ proxmox-homelab/
     github-mirroring.md
     wazuh.md
     windows-endpoint-lab-vm.md
+    hackrange-lab.md
   configs/
 ```
 
