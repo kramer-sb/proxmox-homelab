@@ -11,6 +11,16 @@ All-in-one mail server (SMTP, IMAP, POP3, JMAP and a web admin) in LXC 1004. See
 - **Data, config and logs:** `/opt/stalwart_data` (`data`, `etc`, `logs`). This is the folder to back up.
 - **Credentials:** admin login, mailbox password, LXC root password, SSH key passphrase and the dynamic DNS update password are all in Vaultwarden.
 
+## Why this design
+
+Mail runs on a subdomain, with the main address staying at its current provider. Inbound mail arrives through a forwarding service and outbound mail leaves through a relay, because of the ISP and the home IP address:
+
+- **Port 25 is blocked.** An Xfinity employee says on their community forum that Xfinity blocks port 25 for residential email traffic ([Xfinity: email port 25 no longer supported](https://www.xfinity.com/support/articles/email-port-25-no-longer-supported)). I did not test inbound on my line, but a direct outbound delivery to Gmail on port 25 timed out here, which is consistent. So inbound mail comes in on port 26 from a forwarding service, and outbound mail goes through a relay.
+- **A home IP is distrusted.** Receiving servers distrust residential addresses even with correct SPF, DKIM and DMARC, and a residential line cannot set a PTR (reverse DNS) record.
+- **Receiving is the forgiving direction.** Mail servers retry, so a short outage costs little. Sending is what depends on reputation, which is why it goes through a relay.
+- **Upkeep.** Watch blocklists and uptime. Upgrades can be disruptive: one community report says moving from Stalwart 0.15 to 0.16 needed a fresh install, so check the migration notes before updating.
+- **Treat it as secondary** until delivery has proven reliable over time.
+
 ## Ports
 
 | Port | Service | Reachable from |
