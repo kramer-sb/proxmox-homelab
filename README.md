@@ -40,6 +40,8 @@ proxmox-homelab/
     19a-wazuh-firewall-events-addendum.md
     20-tailscale-access-controls.md
     21-hackrange-lab-vm.md
+    22-installing-stalwart.md
+    22a-stalwart-certificate-relay-and-clients.md
   functional-docs/
     proxmox.md
     repo-workflow.md
@@ -58,6 +60,7 @@ proxmox-homelab/
     wazuh.md
     windows-endpoint-lab-vm.md
     hackrange-lab.md
+    stalwart.md
   configs/
 ```
 
@@ -77,6 +80,8 @@ This is a **public** repo, so a few ground rules are followed throughout:
 - A `.gitignore` blocks common secret-shaped files (`.env`, `*.key`, `*.pem`, `credentials.json`, `secrets.yml`, `*.tfstate`) from ever being staged.
 
 This now also covers backups: encryption keys for cloud backups are never committed, same as any other credential. See `functional-docs/backup-strategy.md`.
+
+**One service is reachable from the internet**: Stalwart, TCP 26 only, forwarded by the gateway so a forwarding service can deliver mail. A firewall inside the container drops port 26 connections from anywhere except that service's published address ranges. Nothing else is forwarded. *See `functional-docs/stalwart.md`.*
 
 ## Secret scanning (gitleaks pre-commit hook)
 
@@ -131,6 +136,9 @@ As of Chapter 3, all machines run on **static IPs** (increments of 5, starting a
 
 Sorted by IP address below, so gaps or the next open `.5` increment are easy to spot at a glance.
 
+**Exception:** Stalwart is at `10.0.0.250`, not the next `.5` increment. The Xfinity app can only forward a port to a device the gateway knows, and the gateway only accepts reserved addresses inside its DHCP pool (`10.0.0.101` to `10.0.0.253`), so Stalwart has a reservation there as well as a static IP. See `installation-notes/22-installing-stalwart.md`, Step 5.
+```
+
 | App Name | IP Address | Service Ports | Access Type | Installation Method | Machine Type | Installation Notes | Functional Doc |
 |---|---|---|---|---|---|---|---|
 | Proxmox VE (host) | `10.0.0.5` (static) | 8006 (web UI), 22 (SSH) | Web UI (MFA) for management, SSH (key-only) for shell | ISO install (manual) | Bare metal - GMKtec NucBox G10 Pro | [01-installing-proxmox.md](installation-notes/01-installing-proxmox.md), [02-security-hardening.md](installation-notes/02-security-hardening.md), [06-static-ip-networking.md](installation-notes/06-static-ip-networking.md) | [proxmox.md](functional-docs/proxmox.md) |
@@ -149,6 +157,8 @@ Sorted by IP address below, so gaps or the next open `.5` increment are easy to 
 | Active Directory Domain Controller (DC01) | `10.0.0.70` (static) | 53 (DNS), 88 (Kerberos), 389 and 636 (LDAP, LDAPS), 445 (SMB) | VirtualBox console on the Windows host (not on Proxmox); accessed by IP, no `.lab` DNS entry. Forwards non-`lab.local` DNS to CoreDNS (`10.0.0.30`) | Manual ISO install (Windows Server 2025 Evaluation, Desktop Experience), AD DS and DNS roles, new forest `lab.local` | VM in VirtualBox on the Windows host (bridged adapter), not Proxmox | [windows-server-ad-lab repo](https://github.com/kramer-sb/windows-server-ad-lab) | - |
 | Windows 11 AD Client (WIN11-CLIENT) | `10.0.0.75` (static) | 3389 (RDP) | `mstsc` Remote Desktop from the Windows host as the local `labadmin` account (accessed by IP, no `.lab` DNS entry); console via Proxmox. DNS points at DC01 (`10.0.0.70`) | Full clone of win11-intune-lab (VM 203) from its `clean-install-before-enroll` snapshot (Windows 11 Enterprise Evaluation), renamed WIN11-CLIENT | VM on Proxmox (VM 205; UEFI) | [windows-server-ad-lab repo](https://github.com/kramer-sb/windows-server-ad-lab) | - |
 | HackRange Local Lab (hackrange-lab) | `10.0.0.80` (static, set inside Ubuntu) | 8456 (HTTPS, lab control panel and web desktop), 2223 (lab SSH), 13489 (lab RDP), 3389 (Ubuntu RDP), 22 (SSH) | `https://10.0.0.80:8456/control/` from the Windows host (self-signed cert), `ssh brie@10.0.0.80`, `mstsc` to `10.0.0.80` as `brie` (accessed by IP, no `.lab` DNS entry); console via Proxmox. The lab only answers private-network clients | Manual ISO install (Ubuntu 24.04.5.1 Desktop) + HackRange `install.sh` (Docker, one image per lab) | VM on Proxmox (VM 206; q35, 4 cores, 8 GiB RAM, 100 GiB on `local-lvm`, backup off) | [21-hackrange-lab-vm.md](installation-notes/21-hackrange-lab-vm.md) | [hackrange-lab.md](functional-docs/hackrange-lab.md) |
+| Stalwart (mail server) | `10.0.0.250` (static, reserved on the gateway) | 8080 (web admin, HTTP), 25, 465, 993, 995, 4190, 443 (LAN only); 26 (forwarded from the internet; a firewall in the container only accepts Dynu's address ranges) | `http://stalwart.lab:8080/admin` from the LAN; `ssh stalwart` (root, key-only). Receives, stores and sends mail; read in Thunderbird on the PC and phone | Community script (Proxmox Helper Scripts, LXC, Advanced Install), pinned v0.16.27 | LXC on Proxmox (CT 1004; 40 GB disk) | [22-installing-stalwart.md](installation-notes/22-installing-stalwart.md), [22a-stalwart-certificate-relay-and-clients.md](installation-notes/22a-stalwart-certificate-relay-and-clients.md) | [stalwart.md](functional-docs/stalwart.md) |
+```
 
 *Removed per the course's Chapter 2 cleanup: the Ubuntu 24.04 LXC (CT 100) built in Chapter 1, and the practice Ubuntu/Debian VMs/LXCs from Section 2.3/2.4 - no longer running, so they don't have rows here.*
 
