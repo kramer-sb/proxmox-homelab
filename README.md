@@ -42,6 +42,7 @@ proxmox-homelab/
     21-hackrange-lab-vm.md
     22-installing-stalwart.md
     22a-stalwart-certificate-relay-and-clients.md
+    23-kali-linux-vm.md
   functional-docs/
     proxmox.md
     repo-workflow.md
@@ -61,6 +62,7 @@ proxmox-homelab/
     windows-endpoint-lab-vm.md
     hackrange-lab.md
     stalwart.md
+    kali-linux.md
   configs/
 ```
 
@@ -137,7 +139,6 @@ As of Chapter 3, all machines run on **static IPs** (increments of 5, starting a
 Sorted by IP address below, so gaps or the next open `.5` increment are easy to spot at a glance.
 
 **Exception:** Stalwart is at `10.0.0.250`, not the next `.5` increment. The Xfinity app can only forward a port to a device the gateway knows, and the gateway only accepts reserved addresses inside its DHCP pool (`10.0.0.101` to `10.0.0.253`), so Stalwart has a reservation there as well as a static IP. See `installation-notes/22-installing-stalwart.md`, Step 5.
-```
 
 | App Name | IP Address | Service Ports | Access Type | Installation Method | Machine Type | Installation Notes | Functional Doc |
 |---|---|---|---|---|---|---|---|
@@ -157,8 +158,8 @@ Sorted by IP address below, so gaps or the next open `.5` increment are easy to 
 | Active Directory Domain Controller (DC01) | `10.0.0.70` (static) | 53 (DNS), 88 (Kerberos), 389 and 636 (LDAP, LDAPS), 445 (SMB) | VirtualBox console on the Windows host (not on Proxmox); accessed by IP, no `.lab` DNS entry. Forwards non-`lab.local` DNS to CoreDNS (`10.0.0.30`) | Manual ISO install (Windows Server 2025 Evaluation, Desktop Experience), AD DS and DNS roles, new forest `lab.local` | VM in VirtualBox on the Windows host (bridged adapter), not Proxmox | [windows-server-ad-lab repo](https://github.com/kramer-sb/windows-server-ad-lab) | - |
 | Windows 11 AD Client (WIN11-CLIENT) | `10.0.0.75` (static) | 3389 (RDP) | `mstsc` Remote Desktop from the Windows host as the local `labadmin` account (accessed by IP, no `.lab` DNS entry); console via Proxmox. DNS points at DC01 (`10.0.0.70`) | Full clone of win11-intune-lab (VM 203) from its `clean-install-before-enroll` snapshot (Windows 11 Enterprise Evaluation), renamed WIN11-CLIENT | VM on Proxmox (VM 205; UEFI) | [windows-server-ad-lab repo](https://github.com/kramer-sb/windows-server-ad-lab) | - |
 | HackRange Local Lab (hackrange-lab) | `10.0.0.80` (static, set inside Ubuntu) | 8456 (HTTPS, lab control panel and web desktop), 2223 (lab SSH), 13489 (lab RDP), 3389 (Ubuntu RDP), 22 (SSH) | `https://10.0.0.80:8456/control/` from the Windows host (self-signed cert), `ssh brie@10.0.0.80`, `mstsc` to `10.0.0.80` as `brie` (accessed by IP, no `.lab` DNS entry); console via Proxmox. The lab only answers private-network clients | Manual ISO install (Ubuntu 24.04.5.1 Desktop) + HackRange `install.sh` (Docker, one image per lab) | VM on Proxmox (VM 206; q35, 4 cores, 8 GiB RAM, 100 GiB on `local-lvm`, backup off) | [21-hackrange-lab-vm.md](installation-notes/21-hackrange-lab-vm.md) | [hackrange-lab.md](functional-docs/hackrange-lab.md) |
+| Kali Linux (Specializing in Linux course) | `10.0.0.90` (static) | 22 (SSH, key-only), 3389 (xrdp, loopback only, reached through an SSH tunnel) | `ssh kali-linux` from the Windows host; RDP with `mstsc` to `localhost:3390` after opening the tunnel `ssh -N -L 3390:localhost:3389 kali-linux`; console via Proxmox | Manual ISO install (Kali 2026.3 Installer) | VM on Proxmox (VM 207; 4 cores, 4 GB RAM, 80 GB on `local-lvm`) | [23-kali-linux-vm.md](installation-notes/23-kali-linux-vm.md) | [kali-linux.md](functional-docs/kali-linux.md) |
 | Stalwart (mail server) | `10.0.0.250` (static, reserved on the gateway) | 8080 (web admin, HTTP), 25, 465, 993, 995, 4190, 443 (LAN only); 26 (forwarded from the internet; a firewall in the container only accepts Dynu's address ranges) | `http://stalwart.lab:8080/admin` from the LAN; `ssh stalwart` (root, key-only). Receives, stores and sends mail; read in Thunderbird on the PC and phone | Community script (Proxmox Helper Scripts, LXC, Advanced Install), pinned v0.16.27 | LXC on Proxmox (CT 1004; 40 GB disk) | [22-installing-stalwart.md](installation-notes/22-installing-stalwart.md), [22a-stalwart-certificate-relay-and-clients.md](installation-notes/22a-stalwart-certificate-relay-and-clients.md) | [stalwart.md](functional-docs/stalwart.md) |
-```
 
 *Removed per the course's Chapter 2 cleanup: the Ubuntu 24.04 LXC (CT 100) built in Chapter 1, and the practice Ubuntu/Debian VMs/LXCs from Section 2.3/2.4 - no longer running, so they don't have rows here.*
 
