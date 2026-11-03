@@ -56,7 +56,6 @@ proxmox-homelab/
     proxmox-backup-server.md
     pbs-encryption-key-backup.md
     kali-python.md
-    gmktec-nucbox-g10-pro-hardware.md
     github-mirroring.md
     wazuh.md
     windows-endpoint-lab-vm.md
