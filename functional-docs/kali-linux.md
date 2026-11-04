@@ -115,6 +115,26 @@ The other `port=` lines in `xrdp.ini` belong to the session sections. Leave them
 - Closing the RDP window only disconnects. Use Log Out in Xfce to end the session.
 - Away from home, Tailscale has to be connected first so `kali-linux.lab` resolves.
 
+## RustScan
+
+RustScan is a fast port scanner that hands the open ports it finds to nmap. Details and the mistakes I made are in [`installation-notes/23a-rustscan-addendum.md`](../installation-notes/23a-rustscan-addendum.md).
+
+Install and check:
+
+```bash
+sudo apt update
+sudo apt install rustscan -y
+rustscan --version
+```
+
+Scan a lab machine with version detection:
+
+```bash
+rustscan -a 10.0.0.10 --ulimit 5000 -- -sV
+```
+
+Everything before the `--` is a RustScan option. Everything after it goes to nmap, and the nmap flag is `-sV` with a capital V. Keep `--ulimit 5000` before the `--`, or the file limit warning appears. If `apt` cannot find the package, run `sudo apt full-upgrade` and try again. Only scan machines in the lab.
+
 ## Lab integration
 
 - [ ] Add VM 207 to the local backup job (daily, keep 7)

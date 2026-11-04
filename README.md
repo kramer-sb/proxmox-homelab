@@ -43,6 +43,7 @@ proxmox-homelab/
     22-installing-stalwart.md
     22a-stalwart-certificate-relay-and-clients.md
     23-kali-linux-vm.md
+    23a-rustscan-addendum.md
   functional-docs/
     proxmox.md
     repo-workflow.md
