@@ -135,6 +135,20 @@ rustscan -a 10.0.0.10 --ulimit 5000 -- -sV
 
 Everything before the `--` is a RustScan option. Everything after it goes to nmap, and the nmap flag is `-sV` with a capital V. Keep `--ulimit 5000` before the `--`, or the file limit warning appears. If `apt` cannot find the package, run `sudo apt full-upgrade` and try again. Only scan machines in the lab.
 
+## Sublime Text
+
+Sublime Text is not in the Kali repos, so add Sublime's official apt repository first. Details are in [`installation-notes/23b-sublime-text-addendum.md`](../installation-notes/23b-sublime-text-addendum.md).
+
+```bash
+sudo mkdir -p /etc/apt/keyrings
+wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo tee /etc/apt/keyrings/sublimehq-pub.asc > /dev/null
+echo -e 'Types: deb\nURIs: https://download.sublimetext.com/\nSuites: apt/stable/\nSigned-By: /etc/apt/keyrings/sublimehq-pub.asc' | sudo tee /etc/apt/sources.list.d/sublime-text.sources
+sudo apt update
+sudo apt install sublime-text -y
+```
+
+Launch it with `subl` or from the Xfce menu. It is a GUI app, so use the RDP desktop or the Proxmox console, not a plain SSH session. Use the stable channel; the dev channel is for licensed users.
+
 ## Lab integration
 
 - [ ] Add VM 207 to the local backup job (daily, keep 7)
