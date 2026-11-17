@@ -45,6 +45,7 @@ proxmox-homelab/
     23-kali-linux-vm.md
     23a-rustscan-addendum.md
     23b-sublime-text-addendum.md
+    24-tcm-ubuntu-vm.md
   functional-docs/
     proxmox.md
     repo-workflow.md
@@ -64,6 +65,7 @@ proxmox-homelab/
     hackrange-lab.md
     stalwart.md
     kali-linux.md
+    tcm-ubuntu.md
   configs/
 ```
 
@@ -161,6 +163,7 @@ Sorted by IP address below, so gaps or the next open `.5` increment are easy to 
 | HackRange Local Lab (hackrange-lab) | `10.0.0.80` (static, set inside Ubuntu) | 8456 (HTTPS, lab control panel and web desktop), 2223 (lab SSH), 13489 (lab RDP), 3389 (Ubuntu RDP), 22 (SSH) | `https://10.0.0.80:8456/control/` from the Windows host (self-signed cert), `ssh brie@10.0.0.80`, `mstsc` to `10.0.0.80` as `brie` (accessed by IP, no `.lab` DNS entry); console via Proxmox. The lab only answers private-network clients | Manual ISO install (Ubuntu 24.04.5.1 Desktop) + HackRange `install.sh` (Docker, one image per lab) | VM on Proxmox (VM 206; q35, 4 cores, 8 GiB RAM, 100 GiB on `local-lvm`, backup off) | [21-hackrange-lab-vm.md](installation-notes/21-hackrange-lab-vm.md) | [hackrange-lab.md](functional-docs/hackrange-lab.md) |
 | Kali Linux (Specializing in Linux course) | `10.0.0.90` (static) | 22 (SSH, key-only), 3389 (xrdp, loopback only, reached through an SSH tunnel) | `ssh kali-linux` from the Windows host; RDP with `mstsc` to `localhost:3390` after opening the tunnel `ssh -N -L 3390:localhost:3389 kali-linux`; console via Proxmox | Manual ISO install (Kali 2026.3 Installer) | VM on Proxmox (VM 207; 4 cores, 4 GB RAM, 80 GB on `local-lvm`) | [23-kali-linux-vm.md](installation-notes/23-kali-linux-vm.md) | [kali-linux.md](functional-docs/kali-linux.md) |
 | Stalwart (mail server) | `10.0.0.250` (static, reserved on the gateway) | 8080 (web admin, HTTP), 25, 465, 993, 995, 4190, 443 (LAN only); 26 (forwarded from the internet; a firewall in the container only accepts Dynu's address ranges) | `http://stalwart.lab:8080/admin` from the LAN; `ssh stalwart` (root, key-only). Receives, stores and sends mail; read in Thunderbird on the PC and phone | Community script (Proxmox Helper Scripts, LXC, Advanced Install), pinned v0.16.27 | LXC on Proxmox (CT 1004; 40 GB disk) | [22-installing-stalwart.md](installation-notes/22-installing-stalwart.md), [22a-stalwart-certificate-relay-and-clients.md](installation-notes/22a-stalwart-certificate-relay-and-clients.md) | [stalwart.md](functional-docs/stalwart.md) |
+| Ubuntu (TCM Security courses) | `10.0.0.95` (static, set in the Proxmox Cloud-Init tab) | 22 (SSH, key-only), 3389 (xrdp, loopback only, reached through an SSH tunnel) | `ssh tcm-ubuntu` from the Windows host; RDP with `mstsc` to `localhost:3391` after opening the tunnel `ssh -N -L 3391:localhost:3389 tcm-ubuntu`; console via Proxmox with xterm.js | Community-scripts Ubuntu VM script (Ubuntu 24.04 cloud image, Cloud-Init) | VM on Proxmox (VM 208; q35, 4 cores, 8 GiB RAM, 80 GiB on `local-lvm`) | [24-tcm-ubuntu-vm.md](installation-notes/24-tcm-ubuntu-vm.md) | [tcm-ubuntu.md](functional-docs/tcm-ubuntu.md) |
 
 *Removed per the course's Chapter 2 cleanup: the Ubuntu 24.04 LXC (CT 100) built in Chapter 1, and the practice Ubuntu/Debian VMs/LXCs from Section 2.3/2.4 - no longer running, so they don't have rows here.*
 
